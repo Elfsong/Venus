@@ -3,9 +3,11 @@
 # Author: Mingzhe Du (mingzhe@nus.edu.sg)
 # Date: 2024/08/31
 
+import os
 import random
 import pandas as pd
 from tqdm import tqdm
+from utils import OpenAIClient
 from datasets import load_dataset
 
 
@@ -13,8 +15,11 @@ class Data_Synthesizer():
     def __init__(self, generation_count) -> None:
         self.seed = 42
         self.streaming = False
+        self.model_name = "gpt-4o"
+        self.model_token = os.getenv("OPENAI_TOKEN")
         self.generation_count = generation_count
         self.languages = ["python", "c", "cpp", "html"]
+        self.openai_client = OpenAIClient(model_name=self.model_name, model_token=self.model_token)
         
         print("Loading datasets...")
         self.data_sources = dict()
@@ -32,7 +37,16 @@ class Data_Synthesizer():
         return iter(ds)
     
     def synthesis(self, seeds):
-        pass
+        prompt = """
+            Drawing inspiration from the following code snippets, generate a challenging Python coding question. Define the input format and expected output format clearly. Return in this JSON format:
+            Response: {"problem_description": "<problem_description>", "canonical_solution": "<canonical_solution>", "test_case_generator": "<test_case_generator>"}
+        """
+        messages = [
+            {"role": "system", "content": "You are a code expert. "},
+            {"role": "user", "content": prompt + f"code snippets: {seeds}"}
+        ]
+        response = self.openai_client.inference(messages)
+        return response
     
     def seed_mix(self):
         seeds = list()
@@ -53,11 +67,12 @@ class Data_Synthesizer():
     
     def pipeline(self):
         for _ in tqdm(range(self.generation_count)):
-            seeds = self.seed_mix()
-            for seed in seeds:
+            seeds = ""
+            for seed in self.seed_mix():
                 code = self.code_sample(seed)
-                print(code)
-                print("========================")
+                seeds += code
+            response = self.synthesis(seeds=seeds)
+            print(response)
     
     
 if __name__ == "__main__":
