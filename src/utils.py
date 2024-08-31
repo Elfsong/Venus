@@ -4,7 +4,18 @@
 # Date: 2024/08/31
 
 import os
+import hashlib
 from openai import OpenAI
+
+def generate_hash(input_string, algorithm='sha256'):
+    try:
+        hasher = hashlib.new(algorithm)
+    except ValueError:
+        print(f"Error: Unsupported hashing algorithm '{algorithm}'")
+        return None
+
+    hasher.update(input_string.encode('utf-8'))
+    return hasher.hexdigest()
 
 class Client(object):
     def __init__(self, model_name, model_token) -> None:
@@ -37,5 +48,3 @@ if __name__ == "__main__":
     client = OpenAIClient(model_name="gpt-4o", model_token=model_token)
     response = client.inference(messages)
     print(response)
-        
-        
