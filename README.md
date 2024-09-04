@@ -1,2 +1,2 @@
-# Venus
-Instruction Tuning for Code Efficiency Improvement
+# AfterBurner
+Controlling Code Optimization with Instructions
