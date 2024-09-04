@@ -109,15 +109,17 @@ Return in this JSON format:
                 
                 result = sb.run_sample(sample)
                 
-                response["problem_description"] = str(response["problem_description"])
-                response["canonical_solution"] = str(response["canonical_solution"])
-                response["simple_test_case_generator"] = str(response["simple_test_case_generator"])
-                response["full_test_case_generator"] = str(response["full_test_case_generator"])
-                response["cases"] = str(result["cases"])
-                response["traceback"] = str(result["traceback"])
-                response["status"] = str(result["status"])
+                instance = {
+                    "problem_description": str(response["problem_description"]),
+                    "canonical_solution": str(response["canonical_solution"]),
+                    "simple_test_case_generator": str(response["simple_test_case_generator"]),
+                    "full_test_case_generator": str(response["full_test_case_generator"]),
+                    "test_cases": str(result["cases"]),
+                    "traceback": str(result["traceback"]),
+                    "status": str(result["status"])
+                }
                 
-                data += [response]
+                data += [instance]
             except Exception as e:
                 print(f"Error and skipped: {e}")
         
@@ -125,6 +127,6 @@ Return in this JSON format:
         ds.push_to_hub("Elfsong/Afterburner", self.ds_name)
 
 if __name__ == "__main__":
-    data_synthesizer = Data_Synthesizer(generation_count=1000)
+    data_synthesizer = Data_Synthesizer(generation_count=500)
     data_synthesizer.pipeline()
     
