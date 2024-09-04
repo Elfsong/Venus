@@ -4,6 +4,7 @@
 # Date: 2024/08/31
 
 import os
+import json
 import hashlib
 from openai import OpenAI
 
@@ -34,17 +35,14 @@ class OpenAIClient(Client):
     
     def inference(self, messages):
         response = self.client.chat.completions.create(
+            response_format={"type":"json_object"},
             model=self.model_name,
             messages=messages
         )
-        return response.choices[0].message.content
-    
-if __name__ == "__main__":
-    model_token = os.getenv("OPENAI_TOKEN")
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "What is a LLM?"}
-    ]
-    client = OpenAIClient(model_name="gpt-4o", model_token=model_token)
-    response = client.inference(messages)
-    print(response)
+        raw_response = response.choices[0].message.content
+        try:
+            response = json.loads(raw_response)
+        except Exception as e:
+            print(f'Error: {e}')
+            response = raw_response
+        return response

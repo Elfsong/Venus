@@ -4,11 +4,18 @@
 # Date: 2024/08/31
 
 import os
+import re
+import uuid
+import pickle
 import random
+import sandbox
+import platform
+import traceback
+import faulthandler
 import pandas as pd
 from tqdm import tqdm
 from utils import OpenAIClient
-from datasets import load_dataset
+from datasets import Dataset, load_dataset
 
 
 class Data_Synthesizer():
@@ -16,6 +23,7 @@ class Data_Synthesizer():
         self.seed = 42
         self.streaming = False
         self.model_name = "gpt-4o"
+        self.ds_name = str(uuid.uuid1())
         self.model_token = os.getenv("OPENAI_TOKEN")
         self.generation_count = generation_count
         self.languages = ["python", "c", "cpp", "html"]
@@ -38,11 +46,23 @@ class Data_Synthesizer():
     
     def synthesis(self, seeds):
         prompt = """
-            Drawing inspiration from the following code snippets, generate a challenging Python coding question. Define the input format and expected output format clearly. Return in this JSON format:
-            Response: {"problem_description": "<problem_description>", "canonical_solution": "<canonical_solution>", "test_case_generator": "<test_case_generator>"}
+Using the provided code snippets as a reference, create a challenging and realistic coding challenge that is not specific to any programming language.
+
+For each 'input = generate_test_case()', the corresponding output must be 'output = <entry_point>(*input)'. If the entry point function takes a single argument, wrap the input in a tuple to maintain consistency. For functions with multiple arguments, ensure the inputs are encapsulated within a tuple.
+
+Return the result in the following JSON format:
+                        
+Return in this JSON format:
+{
+    "problem_description": "a markdown problem description with input/output examples and constraints",
+    "canonical_solution": "a Python function that accepts test case input and returns the expected test case output",
+    "simple_test_case_generator": "a Python function 'generate_test_case()' to randomly return a test case input. The random range can be limited to a reasonable test range.",
+    "full_test_case_generator": "a Python function 'generate_test_case()' to randomly return a test case input. The random range should cover the full range.",
+    "entry_point": "the entry point of the canonical_solution"
+}
         """
         messages = [
-            {"role": "system", "content": "You are a code expert. "},
+            {"role": "system", "content": "You are a code expert. Generate pure code for code fields."},
             {"role": "user", "content": prompt + f"code snippets: {seeds}"}
         ]
         response = self.openai_client.inference(messages)
@@ -57,7 +77,8 @@ class Data_Synthesizer():
                     seeds += [instance]
         return seeds
     
-    def code_sample(self, code):
+    @staticmethod
+    def code_sample(code):
         code = code["content"].split("\n")
         start, end = 0, len(code)
         if len(code) > 5:
@@ -65,17 +86,45 @@ class Data_Synthesizer():
             end = start + random.randrange(5, 10)
         return "\n".join(code[start:end])
     
+    
     def pipeline(self):
+        data = list()
+        sb = sandbox.Sandbox()
+        
         for _ in tqdm(range(self.generation_count)):
-            seeds = ""
-            for seed in self.seed_mix():
-                code = self.code_sample(seed)
-                seeds += code
-            response = self.synthesis(seeds=seeds)
-            print(response)
-    
-    
+            try:
+                seeds = ""
+                for seed in self.seed_mix():
+                    code = Data_Synthesizer.code_sample(seed)
+                    seeds += code
+                response = self.synthesis(seeds=seeds)
+                
+                sample = {
+                    "timeout": 30,
+                    "case_count": 32,
+                    "test_case_generator": response["simple_test_case_generator"].strip(),
+                    "canonical_solution": response['canonical_solution'].strip(),
+                    "entry_point": response['entry_point'].strip(),
+                }
+                
+                result = sb.run_sample(sample)
+                
+                response["problem_description"] = str(response["problem_description"])
+                response["canonical_solution"] = str(response["canonical_solution"])
+                response["simple_test_case_generator"] = str(response["simple_test_case_generator"])
+                response["full_test_case_generator"] = str(response["full_test_case_generator"])
+                response["cases"] = str(result["cases"])
+                response["traceback"] = str(result["traceback"])
+                response["status"] = str(result["status"])
+                
+                data += [response]
+            except Exception as e:
+                print(f"Error and skipped: {e}")
+        
+        ds = Dataset.from_pandas(pd.DataFrame(data=data))
+        ds.push_to_hub("Elfsong/Afterburner", self.ds_name)
+
 if __name__ == "__main__":
-    data_synthesizer = Data_Synthesizer(generation_count=10)
+    data_synthesizer = Data_Synthesizer(generation_count=1000)
     data_synthesizer.pipeline()
     

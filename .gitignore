@@ -1,0 +1,4 @@
+src/__pycache__/*
+playground.ipynb
+.vscode/launch.json
+playground.ipynb
