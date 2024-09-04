@@ -22,8 +22,8 @@ class Data_Synthesizer():
     def __init__(self, generation_count) -> None:
         self.seed = 42
         self.streaming = False
-        self.model_name = "gpt-4o"
         self.ds_name = str(uuid.uuid1())
+        self.model_name = "gpt-4o"
         self.model_token = os.getenv("OPENAI_TOKEN")
         self.generation_count = generation_count
         self.languages = ["python", "c", "cpp", "html"]
@@ -46,15 +46,15 @@ class Data_Synthesizer():
     
     def synthesis(self, seeds):
         prompt = """
-Using the provided code snippets as a reference, create a challenging and realistic coding challenge that is not specific to any programming language.
+Using the provided code snippets as a reference, create a hard coding problem.
 
-For each 'input = generate_test_case()', the corresponding output must be 'output = <entry_point>(*input)'. If the entry point function takes a single argument, wrap the input in a tuple to maintain consistency. For functions with multiple arguments, ensure the inputs are encapsulated within a tuple.
+For each 'input = generate_test_case()', the corresponding output must be 'output = <entry_point>(*input)'. If the entry point function takes a single argument, wrap the input in a tuple.
 
 Return the result in the following JSON format:
                         
 Return in this JSON format:
 {
-    "problem_description": "a markdown problem description with input/output examples and constraints",
+    "problem_description": "a problem description with input/output examples and constraints",
     "canonical_solution": "a Python function that accepts test case input and returns the expected test case output",
     "simple_test_case_generator": "a Python function 'generate_test_case()' to randomly return a test case input. The random range can be limited to a reasonable test range.",
     "full_test_case_generator": "a Python function 'generate_test_case()' to randomly return a test case input. The random range should cover the full range.",
@@ -62,7 +62,7 @@ Return in this JSON format:
 }
         """
         messages = [
-            {"role": "system", "content": "You are a code expert. Generate pure code for code fields."},
+            {"role": "system", "content": "You are a code expert. Generate pure code for solution and test case generator fields. Don't use markdown."},
             {"role": "user", "content": prompt + f"code snippets: {seeds}"}
         ]
         response = self.openai_client.inference(messages)
@@ -110,8 +110,9 @@ Return in this JSON format:
                 result = sb.run_sample(sample)
                 
                 instance = {
-                    "problem_description": str(response["problem_description"]),
-                    "canonical_solution": str(response["canonical_solution"]),
+                    "problem_description": str(response["problem_description"]).strip(),
+                    "canonical_solution": str(response["canonical_solution"]).strip(),
+                    "entry_point": str(response["entry_point"]).strip(),
                     "simple_test_case_generator": str(response["simple_test_case_generator"]),
                     "full_test_case_generator": str(response["full_test_case_generator"]),
                     "test_cases": str(result["cases"]),
@@ -127,6 +128,6 @@ Return in this JSON format:
         ds.push_to_hub("Elfsong/Afterburner", self.ds_name)
 
 if __name__ == "__main__":
-    data_synthesizer = Data_Synthesizer(generation_count=500)
+    data_synthesizer = Data_Synthesizer(generation_count=50)
     data_synthesizer.pipeline()
     
