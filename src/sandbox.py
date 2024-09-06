@@ -7,8 +7,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from multiprocessing import Manager, Process
 from typing import Optional, Dict
 from tqdm import tqdm
-import numpy as np
 import faulthandler
+import tracemalloc
+import numpy as np
 import contextlib
 import traceback
 import itertools
@@ -222,6 +223,9 @@ class Sandbox(object):
             Sandbox.reliability_guard()
             
             try:
+                # Memory Trace
+                tracemalloc.start()
+                
                 # Global Namespace
                 namespace = {}
                 exec("import os", namespace)
@@ -235,6 +239,7 @@ class Sandbox(object):
                 exec("def print(*args):pass", namespace)
                 
                 runtime = 0
+                cases = list()
                 with Sandbox.swallow_io():
                     with Sandbox.time_limit(sample['timeout']):
                         # Code Initialization 
@@ -249,7 +254,6 @@ class Sandbox(object):
                         # Case Generation
                         start_time = time.time()
                         
-                        cases = list()
                         for _ in range(sample['case_count']):
                             try:
                                 exec("input_=generate_test_case()", namespace)
@@ -274,28 +278,32 @@ class Sandbox(object):
                                 raise SerializationException(tb)
                             
                             cases += [namespace['case_dict_']]
-
-                        result.append({"status": "success", "traceback": None, "cases": cases})
                         
+                        _, peak_mem = tracemalloc.get_traced_memory()
                         end_time = time.time()
                         runtime = end_time-start_time
+                        result.append({"status": "success", "traceback": None, "cases": cases, "time": runtime, "mem": peak_mem})
             except TimeoutException:
-                result.append({"status": "failed@timeout", "traceback": runtime, "cases": None})
+                result.append({"status": "failed@timeout", "traceback": str(e), "cases": cases, "time": None, "mem": None})
             except InitialException as e:
-                result.append({"status": "failed@init", "traceback": e, "cases": None})
+                result.append({"status": "failed@init", "traceback": str(e), "cases": cases, "time": None, "mem": None})
             except InputException as e:
-                result.append({"status": "failed@input", "traceback": e, "cases": None})
+                result.append({"status": "failed@input", "traceback": str(e), "cases": cases, "time": None, "mem": None})
             except OutputException as e:
-                result.append({"status": "failed@output", "traceback": e, "cases": None})
+                result.append({"status": "failed@output", "traceback": str(e), "cases": cases, "time": None, "mem": None})
             except SerializationException as e:
-                result.append({"status": "failed@dump", "traceback": e, "cases": None})
+                result.append({"status": "failed@dump", "traceback": str(e), "cases": cases, "time": None, "mem": None})
             except Exception as e:
-                result.append({"status": "failed@error", "traceback": e, "cases": None})
+                result.append({"status": "failed@error", "traceback": str(e), "cases": cases, "time": None, "mem": None})
 
             # Needed for cleaning up.
-            shutil.rmtree = rmtree
-            os.rmdir = rmdir
-            os.chdir = chdir
+            try:
+                shutil.rmtree = rmtree
+                os.rmdir = rmdir
+                os.chdir = chdir
+                tracemalloc.stop()
+            except Exception as e:
+                pass
 
     @staticmethod
     def unsafe_execute(sample, result):
@@ -409,12 +417,14 @@ class Sandbox(object):
             if not result:
                 exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
                 tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                result.append({"status": "failed@timeout", "traceback": tb, "cases": None})
+                result.append({"status": "failed@timeout", "traceback": tb, "cases": None, "time": None, "mem": None})
 
             return dict(
                 status=result[0]['status'],
                 traceback=result[0]['traceback'],
                 cases=result[0]['cases'],
+                code_time=result[0]['time'],
+                code_mem=result[0]['mem']
             )
 
     @staticmethod

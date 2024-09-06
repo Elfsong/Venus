@@ -117,6 +117,8 @@ Return in this JSON format:
                     "full_test_case_generator": str(response["full_test_case_generator"]),
                     "test_cases": str(result["cases"]),
                     "traceback": str(result["traceback"]),
+                    "time": result["time"],
+                    "mem": result["mem"],
                     "status": str(result["status"])
                 }
                 
@@ -128,6 +130,6 @@ Return in this JSON format:
         ds.push_to_hub("Elfsong/Afterburner", self.ds_name)
 
 if __name__ == "__main__":
-    data_synthesizer = Data_Synthesizer(generation_count=50)
+    data_synthesizer = Data_Synthesizer(generation_count=32)
     data_synthesizer.pipeline()
     

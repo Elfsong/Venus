@@ -13,12 +13,12 @@ from datasets import Dataset, load_dataset
 
 class Code_Corrector():
     def __init__(self) -> None:
-        self.datasets = load_dataset("Elfsong/Afterburner", "2e0e3e1a-6ace-11ef-b53a-42010a94000c")["train"]
+        self.datasets = load_dataset("Elfsong/Afterburner", "b92bdf14-6c15-11ef-b84b-42010a94000c")["train"]
         self.ds_name = str(uuid.uuid1())
-        self.refine_loop_count = 2
+        self.correction_loop_count = 2
         self.model_name = "gpt-4o"
         self.model_token = os.getenv("OPENAI_TOKEN")
-        self.sb = sandbox.Sandbox()
+        self.sandbox = sandbox.Sandbox()
         
         self.openai_client = OpenAIClient(model_name=self.model_name, model_token=self.model_token)
     
@@ -35,7 +35,7 @@ class Code_Corrector():
         """
         
         messages += [
-            {"role": "user", "label": "ask_correct", "content": prompt}
+            {"role": "user", "label": "correction", "content": prompt}
         ]
         response = self.openai_client.inference(messages)
         return response
@@ -56,6 +56,8 @@ class Code_Corrector():
             entry_point = instance["entry_point"]
             status = instance["status"]
             traceback = instance["traceback"]
+            code_time = instance["time"]
+            code_mem = instance["mem"]
                         
             messages += [{
                 "role": "user",
@@ -65,33 +67,47 @@ class Code_Corrector():
             
             messages += [{
                 "role": "assistant",
-                "label": "init_solution",
-                "content": canonical_solution
+                "label": "solution",
+                "content": canonical_solution,
+                "status": status,
+                "traceback": traceback,
+                "code_time": code_time,
+                "code_mem": code_mem,
             }]
             
-            refine_loop_count = self.refine_loop_count
-            while status != "success" and refine_loop_count > 0:                
-                result = self.solution_refine(messages, traceback)
-                refined_solution = result["refined_solution"]
+            correction_loop_count = self.correction_loop_count
+            while status != "success" and correction_loop_count > 0: 
+                try:               
+                    result = self.solution_refine(messages, traceback)
+                    refined_solution = result["refined_solution"]
+                    
+                    sample = {
+                        "timeout": 30,
+                        "case_count": 32,
+                        "test_case_generator": test_case_generator,
+                        "canonical_solution": refined_solution.strip(),
+                        "entry_point": entry_point,
+                    }
+                    
+                    result = self.sandbox.run_sample(sample)
+                    status = result["status"]
+                    traceback = result["traceback"]
+                    code_time = result["code_time"]
+                    code_mem = result["code_mem"]
+                    
+                    messages += [{"role": "assistant", "label": "solution", "content": refined_solution, "status": status, "traceback": traceback, "time": code_time, "mem": code_mem,}]
+                    
+                    if result["status"] == "success": break
+                except Exception as e:
+                    print(f"Error: {e}")
+                    
+                correction_loop_count -= 1
                 
-                messages += [{"role": "assistant", "label": "refined_solution", "content": refined_solution}]
-                
-                sample = {
-                    "timeout": 30,
-                    "case_count": 32,
-                    "test_case_generator": test_case_generator.strip(),
-                    "canonical_solution": refined_solution.strip(),
-                    "entry_point": entry_point,
-                }
-                
-                result = self.sb.run_sample(sample)
-                status = result["status"]
-                traceback = result["traceback"]
-                
-                if result["status"] == "success": break
-                
-                refine_loop_count -= 1
-            data += [{"messages": messages, "status": status}]
+            data += [{
+                "messages": messages, 
+                "entry_point": entry_point,
+                "test_case_generator": test_case_generator, 
+            }]
             
         ds = Dataset.from_pandas(pd.DataFrame(data=data))
         ds.push_to_hub("Elfsong/Afterburner_code_correction", self.ds_name)
