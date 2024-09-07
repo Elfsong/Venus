@@ -44,37 +44,24 @@ class Efficient_Optimizer():
             messages = instance["messages"]
             test_case_generator = instance["test_case_generator"]
             entry_point = instance["entry_point"]
+            
+            final_solution = messages[-1]
+            
+            if final_solution["status"] == "success":
 
-            try:               
                 result = self.solution_optimize(messages, "faster")
                 optimized_solution = result["optimized_solution"].strip()
                 
                 sample = {
-                    "timeout": 30,
+                    "timeout": 3000,
                     "case_count": 32,
                     "test_case_generator": test_case_generator,
-                    "canonical_solution": optimized_solution,
+                    "canonical_solution": final_solution["content"],
+                    "optimized_solution": optimized_solution,
                     "entry_point": entry_point,
                 }
-                
-                result = self.sandbox.run_sample(sample)
-                status = result["status"]
-                traceback = result["traceback"]
-                code_time = result["code_time"]
-                code_mem = result["code_mem"]
-                
-                messages += [{"role": "assistant", "label": "solution", "content": optimized_solution, "status": status, "traceback": traceback, "code_time": code_time, "code_mem": code_mem,}]
-            except Exception as e:
-                print(f"Error: {e}")
-            
-            data += [{
-                "messages": messages, 
-                "entry_point": entry_point,
-                "test_case_generator": test_case_generator, 
-            }]
-            
-        ds = Dataset.from_pandas(pd.DataFrame(data=data))
-        ds.push_to_hub("Elfsong/Afterburner_code_optimization", self.ds_name)
+
+                result = self.sandbox.run_evaluation(sample)
 
             
 if __name__ == "__main__":
