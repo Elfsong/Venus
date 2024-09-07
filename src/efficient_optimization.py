@@ -53,7 +53,7 @@ class Efficient_Optimizer():
                 optimized_solution = result["optimized_solution"].strip()
                 
                 sample = {
-                    "timeout": 3000,
+                    "timeout": 30,
                     "case_count": 32,
                     "test_case_generator": test_case_generator,
                     "canonical_solution": final_solution["content"],
