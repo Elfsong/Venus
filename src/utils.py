@@ -43,6 +43,6 @@ class OpenAIClient(Client):
         try:
             response = json.loads(raw_response)
         except Exception as e:
-            print(f'Error: {e}')
+            print(f'OpenAIClient Error: {e}')
             response = raw_response
         return response

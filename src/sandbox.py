@@ -230,8 +230,10 @@ class Sandbox(object):
                 namespace = {}
                 exec("import os", namespace)
                 exec("import sys", namespace)
+                exec("import scipy", namespace)
                 exec("import string", namespace)
                 exec("import pickle", namespace)
+                exec("import logging", namespace)
                 exec("import matplotlib", namespace)
                 exec("from typing import List, Optional, Tuple", namespace)
                 exec("from collections import deque, defaultdict, OrderedDict", namespace)
@@ -244,7 +246,7 @@ class Sandbox(object):
                         # Code Initialization 
                         try:
                             exec(sample['test_case_generator'], namespace)
-                            exec(sample['canonical_solution'], namespace)
+                            exec(sample['solution'], namespace)
                         except Exception as e:
                             exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
                             tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
@@ -322,6 +324,7 @@ class Sandbox(object):
                 
                 # Global Namespace
                 namespace = {}
+                exec("import re", namespace)
                 exec("import os", namespace)
                 exec("import sys", namespace)
                 exec("import string", namespace)
@@ -339,7 +342,7 @@ class Sandbox(object):
                         # Code Initialization 
                         try:
                             exec(sample['test_case_generator'], namespace)
-                            exec(sample['canonical_solution'], namespace)
+                            exec(sample['solution'], namespace)
                         except Exception as e:
                             exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
                             tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
@@ -522,7 +525,7 @@ class Sandbox(object):
             )
             
     @staticmethod
-    def run_sample(sample) -> Dict:
+    def run_generation(sample) -> Dict:
         """
         Evaluates the functional correctness of a completion by running the test suite provided in the problem. 
         """
