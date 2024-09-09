@@ -265,7 +265,7 @@ class Sandbox(object):
                                 raise InputException(tb)
                             
                             try:
-                                entry_point = sample["entry_point"]
+                                entry_point = "solution"
                                 exec(f"output_={entry_point}(*input_)", namespace)
                             except Exception as e:
                                 exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
@@ -307,194 +307,102 @@ class Sandbox(object):
     
     @staticmethod
     def case_generation(sample, result):
-        with Sandbox.create_tempdir():
-            # These system calls are needed when cleaning up tempdir.
-            import os
-            import shutil
-            rmtree = shutil.rmtree
-            rmdir = os.rmdir
-            chdir = os.chdir
-            
-            # Disable functionalities that can make destructive changes to the test.
-            Sandbox.reliability_guard()
-            
-            try:
-                # Memory Trace
-                tracemalloc.start()
+        try:
+            with Sandbox.create_tempdir():
+                # These system calls are needed when cleaning up tempdir.
+                import os
+                import shutil
+                rmtree = shutil.rmtree
+                rmdir = os.rmdir
+                chdir = os.chdir
                 
-                # Global Namespace
-                namespace = {}
-                exec("import re", namespace)
-                exec("import os", namespace)
-                exec("import sys", namespace)
-                exec("import string", namespace)
-                exec("import pickle", namespace)
-                exec("import matplotlib", namespace)
-                exec("from typing import List, Optional, Tuple", namespace)
-                exec("from collections import deque, defaultdict, OrderedDict", namespace)
-
-                exec("def print(*args):pass", namespace)
+                # Disable functionalities that can make destructive changes to the test.
+                Sandbox.reliability_guard()
                 
-                runtime = 0
-                cases = list()
-                with Sandbox.swallow_io():
-                    with Sandbox.time_limit(sample['timeout']):
-                        # Code Initialization 
-                        try:
-                            exec(sample['test_case_generator'], namespace)
-                            exec(sample['solution'], namespace)
-                        except Exception as e:
-                            exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
-                            tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                            raise InitialException(tb)
-
-                        # Case Generation
-                        start_time = time.time()
-                        
-                        for _ in range(sample['case_count']):
+                try:
+                    # Memory Trace
+                    tracemalloc.start()
+                    
+                    # Global Namespace
+                    namespace = {}
+                    exec("import re", namespace)
+                    exec("import os", namespace)
+                    exec("import sys", namespace)
+                    exec("import lxml", namespace)
+                    exec("import string", namespace)
+                    exec("import pickle", namespace)
+                    exec("import feedparser", namespace)
+                    exec("import matplotlib", namespace)
+                    exec("from typing import List, Optional, Tuple", namespace)
+                    exec("from collections import deque, defaultdict, OrderedDict", namespace)
+                    exec("def print(*args):pass", namespace)
+                    
+                    runtime = 0
+                    cases = list()
+                    with Sandbox.swallow_io():
+                        with Sandbox.time_limit(sample['timeout']):
+                            # Code Initialization 
                             try:
-                                exec("input_=generate_test_case()", namespace)
+                                exec(sample['test_case_generator'], namespace)
+                                exec(sample['solution'], namespace)
                             except Exception as e:
                                 exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
                                 tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                                raise InputException(tb)
-                            
-                            try:
-                                entry_point = sample["entry_point"]
-                                exec(f"output_={entry_point}(*input_)", namespace)
-                            except Exception as e:
-                                exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
-                                tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                                raise OutputException(tb)
-                            
-                            try:                
-                                exec('case_dict_=pickle.dumps({"input": input_, "output": output_})', namespace)
-                            except Exception as e:
-                                exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
-                                tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                                raise SerializationException(tb)
-                            
-                            cases += [namespace['case_dict_']]
-                        
-                        _, peak_mem = tracemalloc.get_traced_memory()
-                        end_time = time.time()
-                        runtime = end_time-start_time
-                        result.append({"status": "success", "traceback": None, "cases": cases, "time": runtime, "mem": peak_mem})
-            except TimeoutException:
-                result.append({"status": "failed@timeout", "traceback": str(e), "cases": cases, "time": None, "mem": None})
-            except InitialException as e:
-                result.append({"status": "failed@init", "traceback": str(e), "cases": cases, "time": None, "mem": None})
-            except InputException as e:
-                result.append({"status": "failed@input", "traceback": str(e), "cases": cases, "time": None, "mem": None})
-            except OutputException as e:
-                result.append({"status": "failed@output", "traceback": str(e), "cases": cases, "time": None, "mem": None})
-            except SerializationException as e:
-                result.append({"status": "failed@dump", "traceback": str(e), "cases": cases, "time": None, "mem": None})
-            except Exception as e:
-                result.append({"status": "failed@error", "traceback": str(e), "cases": cases, "time": None, "mem": None})
+                                raise InitialException(tb)
 
-            # Needed for cleaning up.
-            try:
-                shutil.rmtree = rmtree
-                os.rmdir = rmdir
-                os.chdir = chdir
-                tracemalloc.stop()
-            except Exception as e:
-                pass
-
-    @staticmethod
-    def unsafe_execute(sample, result):
-        with Sandbox.create_tempdir():
-
-            # These system calls are needed when cleaning up tempdir.
-            import os
-            import shutil
-            rmtree = shutil.rmtree
-            rmdir = os.rmdir
-            chdir = os.chdir
-
-            # Disable functionalities that can make destructive changes to the test.
-            Sandbox.reliability_guard()
-
-            try:
-                # Global Namespace
-                namespace = {}
-                exec("import re", namespace)
-                exec("import itertools", namespace)
-                exec("import collections", namespace)
-                exec("import heapq", namespace)
-                exec("import bisect", namespace)
-                exec("import string", namespace)
-                exec("import sys", namespace)
-                exec("import lctk", namespace)
-                exec("import functools", namespace)
-                exec("import math", namespace)
-                exec("import copy", namespace)
-                exec("import heapq", namespace)
-                exec("import sortedcontainers", namespace)
-
-                exec("from math import floor, ceil, factorial, sqrt, inf", namespace)
-                exec("from sys import maxsize, stdin", namespace)
-                exec("from bisect import bisect_left, bisect_right", namespace)
-                exec("from itertools import permutations, zip_longest", namespace)
-                exec("from heapq import heappush, heappop, heapify", namespace)
-                exec("from collections import deque, defaultdict, OrderedDict", namespace)
-                exec("from typing import List, Optional, Tuple", namespace)
-                exec("from functools import lru_cache, cache", namespace)
-
-                exec("class ListNode(object):\n\tdef __init__(self, val=0, next=None):\n\t\tself.val = val\n\t\tself.next = next", namespace)
-                exec("class TreeNode(object):\n\tdef __init__(self, val=0, left=None, right=None):\n\t\tself.val = val\n\t\tself.left = left\n\t\tself.right = right", namespace)
-
-                exec("def print(*args):pass", namespace)
-
-                total, passed = 0, 0
-                runtime = 0
-                with Sandbox.swallow_io():
-                    with Sandbox.time_limit(sample['timeout']):
-                        try:
-                            exec(sample['solution'], namespace)
-                            exec(f"solution=Solution()", namespace)
-                            exec(sample['convert_offline'], namespace)
-                            exec(sample['evaluate_offline'], namespace)
-                        except Exception as e:
-                            result.append(
-                                {"status": "failed@load", "runtime": runtime, "error": e})
-
-                        try:
+                            # Case Generation
                             start_time = time.time()
-                            for test_case in sample['test_cases']:
-                                namespace['inputs'] = test_case['input']
-                                namespace['expected'] = test_case['expected']
-                                exec(
-                                    "inputs, expected = convert_offline((inputs, expected))", namespace)
-                                exec(
-                                    f"outputs = solution.{sample['entry_point']}(*inputs)", namespace)
-                                exec(
-                                    f"passed = evaluate_offline(inputs, outputs, expected)", namespace)
-                                total += 1
-                                passed += (1 if namespace['passed'] else 0)
+                            
+                            for _ in range(sample['case_count']):
+                                try:
+                                    exec("input_=generate_test_case()", namespace)
+                                except Exception as e:
+                                    exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
+                                    tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
+                                    raise InputException(tb)
+                                
+                                try:
+                                    entry_point = "solution"
+                                    exec(f"output_={entry_point}(*input_)", namespace)
+                                except Exception as e:
+                                    exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
+                                    tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
+                                    raise OutputException(tb)
+                                
+                                try:                
+                                    exec('case_dict_=pickle.dumps({"input": input_, "output": output_})', namespace)
+                                except Exception as e:
+                                    exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
+                                    tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
+                                    raise SerializationException(tb)
+                                
+                                cases += [namespace['case_dict_']]
+                            
+                            _, peak_mem = tracemalloc.get_traced_memory()
                             end_time = time.time()
                             runtime = end_time-start_time
-                        except Exception as e:
-                            result.append(
-                                {"status": "failed@eval", "runtime": runtime, "error": e})
+                            result.append({"status": "success", "traceback": None, "cases": cases, "time": runtime, "mem": peak_mem})
+                except TimeoutException:
+                    result.append({"status": "failed@timeout", "traceback": str(e), "cases": cases, "time": None, "mem": None})
+                except InitialException as e:
+                    result.append({"status": "failed@init", "traceback": str(e), "cases": cases, "time": None, "mem": None})
+                except InputException as e:
+                    result.append({"status": "failed@input", "traceback": str(e), "cases": cases, "time": None, "mem": None})
+                except OutputException as e:
+                    result.append({"status": "failed@output", "traceback": str(e), "cases": cases, "time": None, "mem": None})
+                except SerializationException as e:
+                    result.append({"status": "failed@dump", "traceback": str(e), "cases": cases, "time": None, "mem": None})
+                except Exception as e:
+                    result.append({"status": "failed@error", "traceback": str(e), "cases": cases, "time": None, "mem": None})
 
-                if total == passed:
-                    result.append(
-                        {"status": "passed", "runtime": runtime, "error": "None"})
-                else:
-                    result.append({"status": "failed@cases",
-                                  "runtime": runtime, "error": "case error"})
-            except TimeoutException:
-                result.append(
-                    {"status": "failed@timeout", "runtime": runtime, "error": "execution time out"})
-            except BaseException as e:
-                result.append({"status": "failed@error", "runtime": runtime, "error": e})
-
-            # Needed for cleaning up.
-            shutil.rmtree = rmtree
-            os.rmdir = rmdir
-            os.chdir = chdir
+                # Needed for cleaning up.
+            
+                    shutil.rmtree = rmtree
+                    os.rmdir = rmdir
+                    os.chdir = chdir
+                    tracemalloc.stop()
+        except Exception as e:
+            pass
 
     @staticmethod
     def run_evaluation(sample) -> Dict:
@@ -542,7 +450,7 @@ class Sandbox(object):
             if not result:
                 exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
                 tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                result.append({"status": "failed@timeout", "traceback": tb, "cases": None, "time": None, "mem": None})
+                result.append({"status": "failed@timeout", "traceback": None, "cases": None, "time": None, "mem": None})
 
             return dict(
                 status=result[0]['status'],
