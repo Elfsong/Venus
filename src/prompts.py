@@ -45,7 +45,17 @@ Your task is to correct the solution and return it in the JSON format.
 
 Expected JSON Format:
 {{
-    "corrected_solution": "corrected solution (generate the code only). The solution function name must be 'solution'"
+    "corrected_solution": "the corrected solution (generate the code only). The solution function name must be 'solution'"
+}}
+"""
+
+instruction_generation_user_prompt = """
+The above solution is functionally correct, {instruction}
+
+Return the optimized solution in the JSON format:
+
+{{
+    "optimized_solution": "the optimized solution (generate the code only). The solution function name must be 'solution'"
 }}
 """
 

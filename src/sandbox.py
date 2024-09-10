@@ -211,99 +211,100 @@ class Sandbox(object):
     
     @staticmethod
     def case_evaluation(sample, result):
-        with Sandbox.create_tempdir():
-            # These system calls are needed when cleaning up tempdir.
-            import os
-            import shutil
-            rmtree = shutil.rmtree
-            rmdir = os.rmdir
-            chdir = os.chdir
-            
-            # Disable functionalities that can make destructive changes to the test.
-            Sandbox.reliability_guard()
-            
-            try:
-                # Memory Trace
-                tracemalloc.start()
+        try:
+            with Sandbox.create_tempdir():
+                # These system calls are needed when cleaning up tempdir.
+                import os
+                import shutil
+                rmtree = shutil.rmtree
+                rmdir = os.rmdir
+                chdir = os.chdir
                 
-                # Global Namespace
-                namespace = {}
-                exec("import os", namespace)
-                exec("import sys", namespace)
-                exec("import scipy", namespace)
-                exec("import string", namespace)
-                exec("import pickle", namespace)
-                exec("import logging", namespace)
-                exec("import matplotlib", namespace)
-                exec("from typing import List, Optional, Tuple", namespace)
-                exec("from collections import deque, defaultdict, OrderedDict", namespace)
-
-                exec("def print(*args):pass", namespace)
+                # Disable functionalities that can make destructive changes to the test.
+                Sandbox.reliability_guard()
                 
-                runtime = 0
-                with Sandbox.swallow_io():
-                    with Sandbox.time_limit(sample['timeout']):
-                        # Code Initialization 
-                        try:
-                            exec(sample['test_case_generator'], namespace)
-                            exec(sample['solution'], namespace)
-                        except Exception as e:
-                            exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
-                            tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                            raise InitialException(tb)
-                        
-                        # Case Generation
-                        start_time = time.time()
-                        
-                        exec("cases=list()", namespace)
-                        for _ in range(sample['case_count']):
+                try:
+                    # Memory Trace
+                    tracemalloc.start()
+                    
+                    # Global Namespace
+                    namespace = {}                
+                    exec("import re", namespace)
+                    exec("import os", namespace)
+                    exec("import sys", namespace)
+                    exec("import lxml", namespace)
+                    exec("import string", namespace)
+                    exec("import pickle", namespace)
+                    exec("import feedparser", namespace)
+                    exec("import matplotlib", namespace)
+                    exec("from typing import List, Optional, Tuple", namespace)
+                    exec("from collections import deque, defaultdict, OrderedDict", namespace)
+                    exec("def print(*args):pass", namespace)
+                    
+                    runtime = 0
+                    with Sandbox.swallow_io():
+                        with Sandbox.time_limit(sample['timeout']):
+                            # Code Initialization 
                             try:
-                                exec("input_=generate_test_case()", namespace)
+                                exec(sample['test_case_generator'], namespace)
+                                exec(sample['solution'], namespace)
                             except Exception as e:
                                 exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
                                 tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                                raise InputException(tb)
+                                raise InitialException(tb)
                             
-                            try:
-                                entry_point = "solution"
-                                exec(f"output_={entry_point}(*input_)", namespace)
-                            except Exception as e:
-                                exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
-                                tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                                raise OutputException(tb)
+                            # Case Generation
+                            exec("cases=list()", namespace)
+                            for _ in tqdm(range(sample['case_count'])):
+                                try:
+                                    exec("input_=generate_test_case()", namespace)
+                                except Exception as e:
+                                    exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
+                                    tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
+                                    raise InputException(tb)
+                                
+                                try:
+                                    entry_point = "solution"
+                                    exec(f"output_={entry_point}(*input_)", namespace)
+                                except Exception as e:
+                                    exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
+                                    tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
+                                    raise OutputException(tb)
+                                
+                                exec("cases += [{'input': input_, 'output': output_}]", namespace)
+                                
+                            # Case Evaluation
+                            start_time = time.time()
+                            exec(sample['optimized_solution'], namespace)
+                            exec("case_len = len(cases)", namespace)
                             
-                            exec("cases += [{'input': input_, 'output': output_}]", namespace)
+                            case_pass = list()
+                            for index in range(namespace["case_len"]):
+                                exec(f"output_={entry_point}(*cases[{index}]['input'])", namespace)
+                                exec(f"p=(cases[{index}]['output']==output_)", namespace)
+                                case_pass += [namespace['p']]
+                                
+                            _, peak_mem = tracemalloc.get_traced_memory()
+                            end_time = time.time()
+                            runtime = end_time-start_time
                             
-                        # Case Evaluation
-                        exec(sample['optimized_solution'], namespace)
-                        exec("case_len = len(cases)", namespace)
-                        
-                        case_pass = list()
-                        for index in range(namespace["case_len"]):
-                            exec(f"output_={entry_point}(*cases[{index}]['input'])", namespace)
-                            exec(f"p=(cases[{index}]['output']==output_)", namespace)
-                            case_pass += [namespace['p']]
-                            
-                        _, peak_mem = tracemalloc.get_traced_memory()
-                        end_time = time.time()
-                        runtime = end_time-start_time
-                        
-                        if all(case_pass):
-                            result.append({"status": "success", "traceback": None, "cases": namespace["cases"], "time": runtime, "mem": peak_mem/10**3})
-                        else:
-                            result.append({"status": "failed@cases", "traceback": None, "cases": namespace["cases"], "time": runtime, "mem": peak_mem/10**3})
+                            if all(case_pass):
+                                result.append({"status": "success", "traceback": None, "time": runtime, "mem": peak_mem/10**3})
+                            else:
+                                result.append({"status": "failed@cases", "traceback": None, "time": runtime, "mem": peak_mem/10**3})
 
-            except Exception as e:
-                result.append({"status": "failed@error", "traceback": str(e)})
+                except Exception as e:
+                    exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
+                    tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
+                    result.append({"status": "failed@error", "traceback": tb, "time": None, "mem": None})
 
             # Needed for cleaning up.
-            try:
-                shutil.rmtree = rmtree
-                os.rmdir = rmdir
-                os.chdir = chdir
-                tracemalloc.stop()
-            except Exception as e:
-                pass
+            shutil.rmtree = rmtree
+            os.rmdir = rmdir
+            os.chdir = chdir
+            tracemalloc.stop()
+        except Exception as e:
+            pass
     
     @staticmethod
     def case_generation(sample, result):
@@ -422,12 +423,11 @@ class Sandbox(object):
             if not result:
                 exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
                 tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                result.append({"status": "failed@timeout", "traceback": tb, "cases": None, "time": None, "mem": None})
+                result.append({"status": "failed@timeout", "traceback": tb, "time": None, "mem": None})
 
             return dict(
                 status=result[0]['status'],
                 traceback=result[0]['traceback'],
-                cases=result[0]['cases'],
                 code_time=result[0]['time'],
                 code_mem=result[0]['mem']
             )

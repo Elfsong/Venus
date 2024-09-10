@@ -119,7 +119,7 @@ class Data_Synthesis:
             response = self.openai_client.inference(instance['messages'])
             
             sample = {
-                "timeout": 300,
+                "timeout": 30,
                 "case_count": 128,
                 "test_case_generator": instance["meta_info"]["simple_test_case_generator"],
                 "solution": response["corrected_solution"].strip(),
@@ -129,7 +129,9 @@ class Data_Synthesis:
             corrected_solution = response["corrected_solution"].strip()
             instance['messages'] += [{"role": "assistant", "content": corrected_solution}]
             instance["solutions"] += [{
-                "code": corrected_solution, "status": result["status"], "traceback": result["traceback"], "code_time": result["code_time"], "code_mem": result["code_mem"]
+                "code": corrected_solution, "status": result["status"], 
+                "traceback": result["traceback"], 
+                "code_time": result["code_time"], "code_mem": result["code_mem"]
             }]
 
             status = True
@@ -137,36 +139,33 @@ class Data_Synthesis:
             print(f"Error@solution_correction: {e}")
         return status
     
-    def solution_generation(self, instance, instruction):
+    def instruction_generation(self, instance, instruction):
         status = False
         try:
-            messages = [
-                {"role": "system", "content": prompts.solution_generation_system_prompt},
-                {"role": "user", "content": prompts.solution_generation_user_prompt.format(
-                    problem_description=instance["meta_info"]["problem_description"], 
-                    test_case_generator=instance["meta_info"]["simple_test_case_generator"], instruction=instruction)
-                }
-            ]
-            response = self.openai_client.inference(messages)
+            instance['messages'] += [{"role": "user", "content": prompts.instruction_generation_user_prompt.format(instruction=instruction)}]
+            response = self.openai_client.inference(instance['messages'])
             
-            instance["meta_info"]["solution"] = response["canonical_solution"].strip()
-            instance["meta_info"]["entry_point"] = response["entry_point"].strip()
-            instance["messages"] += messages
+            optimized_solution = response["optimized_solution"].strip()
             
             sample = {
-                "timeout": 30,
-                "case_count": 128,
-                "test_case_generator": instance["meta_info"]["simple_test_case_generator"],
-                "solution": instance["meta_info"]["solution"],
-                "entry_point": instance["meta_info"]["entry_point"],
+                "timeout": 60,
+                "case_count": 32,
+                "test_case_generator": instance["meta_info"]["full_test_case_generator"],
+                "solution": optimized_solution,
             }
             
-            result = self.sandbox.run_generation(sample)
-            print(str(result["status"]))
-
+            result = self.sandbox.run_evaluation(sample)
+            
+            instance['messages'] += [{"role": "assistant", "content": optimized_solution}]
+            instance["solutions"] += [{
+                "code": optimized_solution, "status": result["status"], 
+                "traceback": result["traceback"], 
+                "code_time": result["code_time"], "code_mem": result["code_mem"]
+            }]
+            
             status = True
         except Exception as e:
-            print(f"Error@solution_generation: {e}")
+            print(f"Error@instruction_generation: {e}")
         return status
     
     
@@ -181,13 +180,13 @@ class Data_Synthesis:
         
         # Optimization               
         while loop > 0:
+            print(f"Instruction Generation {loop}")
             loop -= 1
             last_solution = instance["solutions"][-1]
             if last_solution['status'] != "success":
                 self.code_correction(instance)
             else:
-                # self.solution_generation(instance)
-                break
+                self.instruction_generation(instance, "generate a solution with faster execution time.")
         
         return instance
         
@@ -202,7 +201,7 @@ class Data_Synthesis:
         ds.push_to_hub("Elfsong/Afterburner_New", self.ds_name)
     
 if __name__ == "__main__":
-    data_synthesis = Data_Synthesis(model_name="gpt-4o", language_source=["python", "c", "cpp", "html"], generation_count=100)
+    data_synthesis = Data_Synthesis(model_name="gpt-4o", language_source=["python", "c", "cpp", "html"], generation_count=8)
     print("Current UUID: ", data_synthesis.ds_name)
     data_synthesis.run()
         
