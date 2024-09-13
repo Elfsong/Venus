@@ -17,8 +17,7 @@ Code snippets: {code_reference}
 Return in the JSON format:
 {{
     "problem_description": "a problem description with input/output examples and constraints in Markdown.",
-    "simple_test_case_generator": "an executable Python function 'generate_test_case()' to randomly return a test case input from a reasonable test range",
-    "full_test_case_generator": "an executable Python function 'generate_test_case()' to randomly return a test case input from the full input range",
+    "test_case_generator": "an executable Python function 'generate_test_case()' to randomly return a test case input from a reasonable test range.",
     "canonical_solution": "an executable {language} function that accepts a test case input and returns the expected test case output. The canonical_solution function name must be 'solution'.",
 }}
 """
@@ -50,7 +49,7 @@ Expected JSON Format:
 """
 
 instruction_generation_user_prompt = """
-The above solution is functionally correct, {instruction}
+Well done! The above solution is functionally correct, {instruction}.
 
 Return the optimized solution in the JSON format:
 

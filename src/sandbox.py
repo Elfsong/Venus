@@ -247,7 +247,7 @@ class Sandbox(object):
                             # Code Initialization 
                             try:
                                 exec(sample['test_case_generator'], namespace)
-                                exec(sample['solution'], namespace)
+                                exec(sample['original_solution'], namespace)
                             except Exception as e:
                                 exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
                                 tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
@@ -450,7 +450,7 @@ class Sandbox(object):
             if not result:
                 exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
                 tb = Sandbox.custom_traceback(exc_type, exc_value, exc_traceback)
-                result.append({"status": "failed@timeout", "traceback": None, "cases": None, "time": None, "mem": None})
+                result.append({"status": "failed@timeout", "traceback": tb, "cases": None, "time": None, "mem": None})
 
             return dict(
                 status=result[0]['status'],

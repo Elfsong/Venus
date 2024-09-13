@@ -77,21 +77,19 @@ class Data_Synthesis:
             
             solution = response["canonical_solution"].strip()
             problem_description = response["problem_description"].strip()
-            simple_test_case_generator = response["simple_test_case_generator"].strip()
-            full_test_case_generator = response["full_test_case_generator"].strip()
+            test_case_generator = response["test_case_generator"].strip()
             
             sample = {
-                "timeout": 30,
-                "case_count": 128,
-                "test_case_generator": simple_test_case_generator,
+                "timeout": 64,
+                "case_count": 64,
+                "test_case_generator": test_case_generator,
                 "solution": solution,
                 "entry_point": "solution",
             }
             result = self.sandbox.run_generation(sample)
             
             instance["meta_info"]["problem_description"] = problem_description
-            instance["meta_info"]["simple_test_case_generator"] = simple_test_case_generator
-            instance["meta_info"]["full_test_case_generator"] = full_test_case_generator
+            instance["meta_info"]["test_case_generator"] = test_case_generator
             instance["meta_info"]["test_cases"] = result["cases"]
             
             instance["solutions"] += [{
@@ -100,7 +98,7 @@ class Data_Synthesis:
             }]
             
             problem_description = instance["meta_info"]["problem_description"]
-            test_case_generator = instance["meta_info"]["simple_test_case_generator"]
+            test_case_generator = instance["meta_info"]["test_case_generator"]
             last_solution = instance["solutions"][-1]
             instance['messages'] += [{"role": "system", "content": prompts.solution_generation_system_prompt}]
             instance['messages'] += [{"role": "user", "content": prompts.solution_generation_user_prompt.format(problem_description=problem_description, test_case_generator=test_case_generator)}]
@@ -121,7 +119,7 @@ class Data_Synthesis:
             sample = {
                 "timeout": 30,
                 "case_count": 128,
-                "test_case_generator": instance["meta_info"]["simple_test_case_generator"],
+                "test_case_generator": instance["meta_info"]["test_case_generator"],
                 "solution": response["corrected_solution"].strip(),
             }
             result = self.sandbox.run_generation(sample)
@@ -148,10 +146,11 @@ class Data_Synthesis:
             optimized_solution = response["optimized_solution"].strip()
             
             sample = {
-                "timeout": 60,
+                "timeout": 128,
                 "case_count": 32,
-                "test_case_generator": instance["meta_info"]["full_test_case_generator"],
-                "solution": optimized_solution,
+                "test_case_generator": instance["meta_info"]["test_case_generator"],
+                "original_solution": instance["solutions"][-1]['code'],
+                "optimized_solution": optimized_solution,
             }
             
             result = self.sandbox.run_evaluation(sample)
@@ -178,30 +177,46 @@ class Data_Synthesis:
         # Problem Synthesis
         if not self.problem_synthesis(instance, "Python"): return None
         
-        # Optimization               
-        while loop > 0:
-            print(f"Instruction Generation {loop}")
-            loop -= 1
+        # Optimization 
+        for _ in tqdm(range(loop), desc="Optimizing..."):
             last_solution = instance["solutions"][-1]
             if last_solution['status'] != "success":
                 self.code_correction(instance)
             else:
-                self.instruction_generation(instance, "generate a solution with faster execution time.")
+                instruction = random.choice(["Generate a solution that optimizes execution speed", "Generate a solution that optimizes memory usage"])
+                self.instruction_generation(instance, instruction)
+        
+        # Statistic
+        success_count = 0
+        status_list = list()
+        for solution in instance["solutions"]:
+            if solution['status'] == "success":
+                success_count += 1
+            status_list += [solution['status']]
+        instance['success_count'] = success_count
+        instance['status_list'] = status_list
+        instance['meta_info']['success_count'] = success_count
         
         return instance
         
     def run(self):
         instances = list()
         for _ in tqdm(range(self.generation_count)):
-            instance = self.pipeline(loop=3)
+            instance = self.pipeline(loop=5)
             if instance:
                 instances.append(instance)
-        
+            
         ds = Dataset.from_pandas(pd.DataFrame(data=instances))
-        ds.push_to_hub("Elfsong/Afterburner_New", self.ds_name)
+        ds.push_to_hub("Elfsong/Afterburner_RAW", self.ds_name)
     
 if __name__ == "__main__":
-    data_synthesis = Data_Synthesis(model_name="gpt-4o", language_source=["python", "c", "cpp", "html"], generation_count=8)
-    print("Current UUID: ", data_synthesis.ds_name)
-    data_synthesis.run()
+    for index in tqdm(range(30)):
+        try:
+            data_synthesis = Data_Synthesis(model_name="gpt-4o", language_source=["python", "cpp", "c", "html", "go"], generation_count=20)
+            # data_synthesis = Data_Synthesis(model_name="gpt-4o", language_source=["python"], generation_count=20)
+            print("Current UUID: ", data_synthesis.ds_name)
+            data_synthesis.run()
+        except Exception as e:
+            print(e)
+            
         
