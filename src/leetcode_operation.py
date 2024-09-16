@@ -44,16 +44,18 @@ def vital_retry(func):
     return wrap
 
 class LeetCodeRetrival:
-    def __init__(self, lang, sample_num, headers) -> None:
+    def __init__(self, lang, mode, headers) -> None:
         self.lang = lang
+        self.mode = mode
         self.headers = headers
         self.instances = list()
-        self.sample_num = sample_num
         self.url = "https://leetcode.com/graphql/"
         self.model_token = os.getenv("OPENAI_API_KEY")
-        self.openai_client = OpenAIClient("gpt-4o", model_token=self.model_token)
         self.lang_code_mapping = { "cpp": 0, "python": 2, "golang": 10, "python3": 11, }
         self.lang_code = self.lang_code_mapping[self.lang]
+        
+        if self.mode == "submit":
+            self.openai_client = OpenAIClient("gpt-4o", model_token=self.model_token)
     
     def runtime_range(self, instance):
         instance['rt_list'] = list()
@@ -101,7 +103,6 @@ class LeetCodeRetrival:
                 'difficulty': question['difficulty'],
                 'topics': [topic['slug'] for topic in question['topicTags']],
             }
-            # print("[+] Current Question: ", instance['question_id'])
                 
             # Skip dataset questions
             if 'database' in instance['topics']: return None
@@ -248,8 +249,9 @@ class LeetCodeRetrival:
                 self.code_submit(question, code)
                 time.sleep(10)
     
-    def retrieval_pipeline(self, start, range):
+    def retrieval_pipeline(self, start, range, sample_num):
         instances  = list()
+        self.sample_num = sample_num
         question_list = self.question_retrieval(start, range)
         
         for question in tqdm(question_list, desc="question"):
@@ -264,7 +266,10 @@ class LeetCodeRetrival:
            
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('language') 
+    parser.add_argument('--language') 
+    parser.add_argument("--mode", default="retrieval")
+    parser.add_argument("--start", default=0)
+    parser.add_argument("--end", default=350)
     args = parser.parse_args()
 
     if args.language == "python3":
@@ -285,10 +290,12 @@ if __name__ == "__main__":
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
             'x-csrftoken': 'w9QK8d13qxLeVG855ILnwMp0c6oW4WGlSbLi5r5MUWryY9a6Dg1NPx68vLRgG9JU'
         }
-        leetcode_client = LeetCodeRetrival(lang="python3", sample_num=2, headers=headers)
-        for i in tqdm(range(0, 350)):
-            # leetcode_client.submit_pipeline(i*10, 10)
-            leetcode_client.retrieval_pipeline(i*10, 10)
+        leetcode_client = LeetCodeRetrival(lang="python3", mode=args.mode, headers=headers)
+        for i in tqdm(range(args.start, args.end)):
+            if args.mode == "submit":
+                leetcode_client.submit_pipeline(i*10, 10)
+            elif args.mode == "retrieval": 
+                leetcode_client.retrieval_pipeline(i*10, 10, sample_num=2)
     elif args.language == "cpp":
         headers = {
             'accept': '*/*',
@@ -307,9 +314,11 @@ if __name__ == "__main__":
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
             'x-csrftoken': 'got8eSj7zU7azwzuU43vQdG1ZEn6jojtsSnMwX8ePijOZD89Kj0apMemvu6wUvkk'
         }
-        leetcode_client = LeetCodeRetrival(lang="cpp", sample_num=2, headers=headers)
-        for i in tqdm(range(20, 350)):
-            # leetcode_client.submit_pipeline(i*10, 10)
-            leetcode_client.retrieval_pipeline(i*10, 10)
+        leetcode_client = LeetCodeRetrival(lang="cpp", mode=args.mode, headers=headers)
+        for i in tqdm(range(args.start, args.end)):
+            if args.mode == "submit":
+                leetcode_client.submit_pipeline(i*10, 10)
+            elif args.mode == "retrieval": 
+                leetcode_client.retrieval_pipeline(i*10, 10, sample_num=2)
         
 
