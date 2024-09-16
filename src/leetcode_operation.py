@@ -268,8 +268,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--language') 
     parser.add_argument("--mode", default="retrieval")
-    parser.add_argument("--start", default=0)
-    parser.add_argument("--end", default=350)
+    parser.add_argument("--start", type=int, default=0)
+    parser.add_argument("--end", type=int, default=350)
     args = parser.parse_args()
 
     if args.language == "python3":
