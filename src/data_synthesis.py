@@ -210,9 +210,9 @@ class Data_Synthesis:
         ds.push_to_hub("Elfsong/Afterburner_RAW", self.ds_name)
     
 if __name__ == "__main__":
-    for index in tqdm(range(30)):
+    for index in tqdm(range(20)):
         try:
-            data_synthesis = Data_Synthesis(model_name="gpt-4o", language_source=["python", "cpp", "c", "html", "go"], generation_count=20)
+            data_synthesis = Data_Synthesis(model_name="gpt-4o", language_source=["python", "cpp", "c"], generation_count=20)
             # data_synthesis = Data_Synthesis(model_name="gpt-4o", language_source=["python"], generation_count=20)
             print("Current UUID: ", data_synthesis.ds_name)
             data_synthesis.run()

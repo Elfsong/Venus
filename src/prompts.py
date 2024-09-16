@@ -60,3 +60,19 @@ Return the optimized solution in the JSON format:
 
 
 normal_instruction = "Given the following coding problem and the corresponding test case generator, return a Python code solution and its entry point in the JSON format. "
+
+solution_generation = """
+Given the problem description, generate a {lang} solution in the specific JSON format.
+
+Problem Description:
+{problem_description}
+
+Code Prompt:
+{code_prompt}
+
+Return the {lang} solution in the JSON format:
+
+{{
+    "solution": "the {lang} solution starts with the given code prompt"
+}}
+"""
