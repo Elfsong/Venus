@@ -156,11 +156,11 @@ class LeetCodeRetrival:
         response = self.retrieval(memory_payload)
         return response
     
-    def question_retrieval(self, start=0, range=5000):
+    def question_retrieval(self, start=0, range_=5000):
         question_payload = json.dumps({
             "query": "query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {problemsetQuestionList: questionList(categorySlug: $categorySlug\nlimit: $limit\nskip: $skip\nfilters: $filters\n) {total: totalNum\nquestions: data {frontendQuestionId: questionFrontendId\nquestionId\nacRate\ncontent\ncodeSnippets {lang\nlangSlug\ncode}\ndifficulty\nfreqBar\nisFavor\npaidOnly: isPaidOnly\nstatus\ntitle\ntitleSlug\ntopicTags {name\nid\nslug}hasSolution\nhasVideoSolution}}}",
             "variables": {
-                "categorySlug": "", "skip": start, "limit": range, "filters": {}
+                "categorySlug": "algorithms", "skip": start, "limit": range_, "filters": {}
             }
         })
         
@@ -230,29 +230,35 @@ class LeetCodeRetrival:
             "typed_code": code
         })
         response = requests.request("POST", url, headers=self.headers, data=payload, timeout=5)
-        print(response.text)
+        return response.status_code
     
-    def submit_pipeline(self, start, range):
-        question_list = self.question_retrieval(start, range)
+    def submit_pipeline(self, start, range_):
+        question_list = self.question_retrieval(start, range_)
 
-        for question in tqdm(question_list):
+        for question in question_list:
             if question['paidOnly']: continue 
-            if not question['hasSolution']: continue           
+            # if not question['hasSolution']: continue           
             if 'database' in [topic['slug'] for topic in question['topicTags']]: continue
+            
+            print(f"{self.lang} Code Submission:", question['frontendQuestionId'], question['questionId'], question['titleSlug'])
             
             submissions = leetcode_client.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
             if submissions:
                 time.sleep(1)
             else:
-                print(f"{self.lang} Code Submission:", question['frontendQuestionId'], question['questionId'], question['titleSlug'])
+                print(f"[+] Generating code and submitting...")
                 code = self.code_generation(question)
-                self.code_submit(question, code)
-                time.sleep(10)
+                for _ in range(2):
+                    status = self.code_submit(question, code)
+                    time.sleep(10)
+                    if status == 200:
+                        break
+                    
     
-    def retrieval_pipeline(self, start, range, sample_num):
+    def retrieval_pipeline(self, start, range_, sample_num):
         instances  = list()
         self.sample_num = sample_num
-        question_list = self.question_retrieval(start, range)
+        question_list = self.question_retrieval(start, range_)
         
         for question in tqdm(question_list, desc="question"):
             if not question['hasSolution']: continue  
@@ -261,8 +267,9 @@ class LeetCodeRetrival:
             if instance:
                 instances += [instance]
         
-        ds = Dataset.from_pandas(pd.DataFrame(data=instances))
-        ds.push_to_hub("Elfsong/venus_new", f"{self.lang}-{start}-{start+range-1}")
+        if instances:
+            ds = Dataset.from_pandas(pd.DataFrame(data=instances))
+            ds.push_to_hub("Elfsong/venus_new", f"{self.lang}-{start}-{start+range_-1}")
            
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
@@ -277,7 +284,7 @@ if __name__ == "__main__":
             'accept': '*/*',
             'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8,zh-CN;q=0.7,zh-HK;q=0.6,zh-TW;q=0.5,zh;q=0.4',
             'content-type': 'application/json',
-            'cookie': 'gr_user_id=9c46f1ce-3d85-4e02-b014-0596877e0ee8; _gid=GA1.2.706162636.1726300707; __stripe_mid=78bc9104-0d95-4914-a220-77ef87d76ef840294a; ip_check=(false, "137.132.27.180"); __cf_bm=CvXRBriTITnTS2KxkJpNe1jqKaAYwqt3VpChUneeNGc-1726470386-1.0.1.1-DebN6cjzFeZiP1vdvw8.zfVpG7gc.f.aJKdL8zTV1KZ43VloylN25kka8sscK_RXeTuTrEj__3TeTEDW64w2EQ; cf_clearance=Wl9f_nVkSUJPaBgKL8Ki4_F.99h_PpXL7saGOkfDA6U-1726470420-1.2.1.1-hZktmEbY1rE2YmDAyA.mUYqn1WQAuN3h6uKEiwaRTB2auABS9b0Ci79Hcn4ZpyAkDWeGpJUR4eKBdt2WUpGqRygQ_N8Fz2KEwXCoUwivEiU.jJQ0uUCuDFC6n7QT5JkgHHWInr_1nkSNLmalGJZT.rZHpxdIOdT9YArBYOqZzsn.jhKVqLH6bnNENZLpOMtEOxAGcBt4adxZfIxJI9gNvCV4SfQKL6nolh7V5E7KVAGiJJCtVQbFtlvEnaf0B.QYQS5Bs32tdhpsXGRNmrhM.CAfO0wbTEPOkJPTgfLtRUcZEcBBpjVeJ1zic9ZG3Olp0j39KsgDVp5S2PCzJtYUisXyNz75hkb7MHe.hKWwxF0ciUItKo85ZBg037_cK3B7mxoULvQIoJNJXRkqalBEFI0iCp9UKGpQBdvHUFQyMIlBc6cfUv_6UNVqp1R9cuHH; csrftoken=w9QK8d13qxLeVG855ILnwMp0c6oW4WGlSbLi5r5MUWryY9a6Dg1NPx68vLRgG9JU; messages=.eJyLjlaKj88qzs-Lz00tLk5MT1XSMdAxMtVRiswvVchILEtVKM5Mz0tNUcgvLdFTitXBpTy4NDkZKJJWmpNTCdOSmaeQWKzgmpMGVJ8O1BwLAObhJPo:1sq5p7:0hnVg7tFSlpoCXm7MqQPT5sUoTP_Uf3ZK2sN5a6Wb28; LEETCODE_SESSION=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfYXV0aF91c2VyX2lkIjoiMTY1NTgwIiwiX2F1dGhfdXNlcl9iYWNrZW5kIjoiZGphbmdvLmNvbnRyaWIuYXV0aC5iYWNrZW5kcy5Nb2RlbEJhY2tlbmQiLCJfYXV0aF91c2VyX2hhc2giOiIzNmJmM2I4N2YwNTIyMTMyN2Q2NTM5NWQ1OWQ2MjJkZDhkMDgzM2JlYmJlZWZhMGE4YjA5NzczZmRkMDUzZGY4IiwiaWQiOjE2NTU4MCwiZW1haWwiOiJkdW1pbmd6aGVAMTI2LmNvbSIsInVzZXJuYW1lIjoiRWxmc29uZyIsInVzZXJfc2x1ZyI6IkVsZnNvbmciLCJhdmF0YXIiOiJodHRwczovL2Fzc2V0cy5sZWV0Y29kZS5jb20vdXNlcnMvZWxmc29uZy9hdmF0YXJfMTU2NzgzMjQ2NS5wbmciLCJyZWZyZXNoZWRfYXQiOjE3MjY0NzA0MjEsImlwIjoiMTAzLjYuMTUwLjE3MiIsImlkZW50aXR5IjoiZmUwNjczZjJhNDhkMDQ3YjkxMmIyN2UyYTBjMDJmOWYiLCJkZXZpY2Vfd2l0aF9pcCI6WyI1MjIzYmQ0NmY1MmVkYjkwNGZmZDEzYjUxMjQ2YzJmNyIsIjEwMy42LjE1MC4xNzIiXSwic2Vzc2lvbl9pZCI6NzI0OTY5MTAsIl9zZXNzaW9uX2V4cGlyeSI6MTIwOTYwMH0.HTxz4lMQytdRF5EgZIPHdNbH1TrnkgJo5QwMwUsWuDs; 87b5a3c3f1a55520_gr_last_sent_sid_with_cs1=1c9d800c-f6ae-4ac2-a856-5416fa3d1a96; 87b5a3c3f1a55520_gr_last_sent_cs1=Elfsong; 87b5a3c3f1a55520_gr_session_id=1c9d800c-f6ae-4ac2-a856-5416fa3d1a96; 87b5a3c3f1a55520_gr_session_id_sent_vst=1c9d800c-f6ae-4ac2-a856-5416fa3d1a96; _dd_s=rum=0&expire=1726471325358; INGRESSCOOKIE=aa0b2af0efac5af7d3773c4aef1eda15|8e0876c7c1464cc0ac96bc2edceabd27; __stripe_sid=cffd02ab-b497-44ba-b6ab-75373f17906de9ead7; 87b5a3c3f1a55520_gr_cs1=Elfsong; _ga=GA1.1.111667137.1725179955; _ga_CDRWKZTDEX=GS1.1.1726470387.18.1.1726470446.1.0.0; __cf_bm=oZoqXltU.8kP66OaMxyl2ggs6UCgUSKxqfUfki4_7fs-1726470395-1.0.1.1-yiM905PeEMfCTJ4yXXki4oM2s416_Z7kAneu7hPDPtcXb22atHcdZVtx3EL2xUh6wmEvcpIW_uW4weHHnxb86Q',
+            'cookie': 'gr_user_id=9c46f1ce-3d85-4e02-b014-0596877e0ee8; _gid=GA1.2.706162636.1726300707; __stripe_mid=78bc9104-0d95-4914-a220-77ef87d76ef840294a; ip_check=(false, "137.132.27.180"); cf_clearance=1owrkD8IRsQXTDy6_H_QGgf.syN_BE6As5L2WjoVH0o-1726484459-1.2.1.1-zQCb_IwMA8aW3W3Dl0BREgYBTNj85qmC2D8fsks.jZtve9mp2CesWYDADyyDf0XRIzUeqS_oTQ2a1_QObVG.bbFZcFbI6dlSxXxZ1ANFCqu0zsvtbKAI5O29o1ZULd_Bh0pI3oP1nC8jHgLtiOA3puluGxYnNE.Lmmce2G1xm0Agbl4w9mkhPwsrTb2zPYEB3ZVD3bhpVFMGY3vWOQQrUxp88WvPJ8AXlrw3RYe6IMIVX3lq7aPxmksuRhIuN2wGrRhZ6s5_JOY3LxNShledWm1pHph9hBYNlLcDPWXm7y81JwDBGhH1ok2uDL.WlVABHNphZccX7q71CbH.nq7_x2kxJUzDZxfQepAKkV5iiyGbLhyL8PR9S3r6JxWxfm_jVlY0r8BIfZSWwH5tJb2W4RdGD64HO_jfFKLczdWI1ulOwdFCWyPr2nQRO6vIxKfu; csrftoken=ru31nv8NWJBPn0GlNk9Snx7w0J6CpIE6jfxkL7PN0e7VPthgLXBsyTdAhaumMaKl; messages=.eJyLjlaKj88qzs-Lz00tLk5MT1XSMdAxMtVRiswvVchILEtVKM5Mz0tNUcgvLdFTitXBpTy4NDkZKJJWmpNTCdOSmaeQWKyQm5mXXpWRamBgiE8_1axzzUkDqk8Hao4FAOnOShw:1sq9TZ:QYu_QH6ZKsuiB0qe1DZF9hoF7SC-GMimw4weHgliX5Q; __cf_bm=AsFzF416KTHkJZf2.p7Zm.V2cFlTjecLEsObntrfbW0-1726551007-1.0.1.1-4Sa__YN63JuLru6ZOFLKX0Dv3YQmjcUvol5Z0pQc5Lghdk1nx1oQvoIeJP4ufUjTwo358vknoV19grfWGu086Q; LEETCODE_SESSION=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfYXV0aF91c2VyX2lkIjoiMTY1NTgwIiwiX2F1dGhfdXNlcl9iYWNrZW5kIjoiZGphbmdvLmNvbnRyaWIuYXV0aC5iYWNrZW5kcy5Nb2RlbEJhY2tlbmQiLCJfYXV0aF91c2VyX2hhc2giOiIzNmJmM2I4N2YwNTIyMTMyN2Q2NTM5NWQ1OWQ2MjJkZDhkMDgzM2JlYmJlZWZhMGE4YjA5NzczZmRkMDUzZGY4IiwiaWQiOjE2NTU4MCwiZW1haWwiOiJkdW1pbmd6aGVAMTI2LmNvbSIsInVzZXJuYW1lIjoiRWxmc29uZyIsInVzZXJfc2x1ZyI6IkVsZnNvbmciLCJhdmF0YXIiOiJodHRwczovL2Fzc2V0cy5sZWV0Y29kZS5jb20vdXNlcnMvZWxmc29uZy9hdmF0YXJfMTU2NzgzMjQ2NS5wbmciLCJyZWZyZXNoZWRfYXQiOjE3MjY0ODQ0NjEsImlwIjoiMTM3LjEzMi4yNy4xODAiLCJpZGVudGl0eSI6ImZlMDY3M2YyYTQ4ZDA0N2I5MTJiMjdlMmEwYzAyZjlmIiwiZGV2aWNlX3dpdGhfaXAiOlsiNTIyM2JkNDZmNTJlZGI5MDRmZmQxM2I1MTI0NmMyZjciLCIxMzcuMTMyLjI3LjE4MCJdLCJzZXNzaW9uX2lkIjo3MjUxNDI4OCwiX3Nlc3Npb25fZXhwaXJ5IjoxMjA5NjAwfQ.2HgLsyFCYGvnbpR4BRz_26gngPXwVn9tTUOj9Pc7zAY; 87b5a3c3f1a55520_gr_last_sent_sid_with_cs1=8cfe31d0-2ed2-49df-ac4a-f1b487fe579e; 87b5a3c3f1a55520_gr_last_sent_cs1=Elfsong; 87b5a3c3f1a55520_gr_session_id=8cfe31d0-2ed2-49df-ac4a-f1b487fe579e; _dd_s=rum=0&expire=1726551910474; INGRESSCOOKIE=13bbbea676d475ed0e9bf577169cf313|8e0876c7c1464cc0ac96bc2edceabd27; 87b5a3c3f1a55520_gr_session_id_sent_vst=8cfe31d0-2ed2-49df-ac4a-f1b487fe579e; _ga=GA1.1.111667137.1725179955; 87b5a3c3f1a55520_gr_cs1=Elfsong; _ga_CDRWKZTDEX=GS1.1.1726551007.22.1.1726551437.60.0.0',
             'origin': 'https://leetcode.com',
             'priority': 'u=1, i',
             'referer': 'https://leetcode.com/problems/number-of-subarrays-with-and-value-of-k/',
@@ -288,7 +295,7 @@ if __name__ == "__main__":
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-            'x-csrftoken': 'w9QK8d13qxLeVG855ILnwMp0c6oW4WGlSbLi5r5MUWryY9a6Dg1NPx68vLRgG9JU'
+            'x-csrftoken': 'ru31nv8NWJBPn0GlNk9Snx7w0J6CpIE6jfxkL7PN0e7VPthgLXBsyTdAhaumMaKl'
         }
         leetcode_client = LeetCodeRetrival(lang="python3", mode=args.mode, headers=headers)
         for i in tqdm(range(args.start, args.end)):
@@ -301,7 +308,7 @@ if __name__ == "__main__":
             'accept': '*/*',
             'accept-language': 'en-GB,en;q=0.9',
             'content-type': 'application/json',
-            'cookie': '_gid=GA1.2.881139128.1726468155; gr_user_id=88c599e2-aa02-4bb2-b478-e228290b5b76; 87b5a3c3f1a55520_gr_session_id=eb95274d-0011-4479-9054-0d5687cb91df; ip_check=(false, "103.6.150.172"); 87b5a3c3f1a55520_gr_session_id_sent_vst=eb95274d-0011-4479-9054-0d5687cb91df; 87b5a3c3f1a55520_gr_last_sent_sid_with_cs1=eb95274d-0011-4479-9054-0d5687cb91df; 87b5a3c3f1a55520_gr_last_sent_cs1=Elfsong; INGRESSCOOKIE=6e36939377a7c2dee1de98ed97778d7b|8e0876c7c1464cc0ac96bc2edceabd27; __stripe_mid=63cfa7c5-ed28-46d3-b89b-8a8ad2940c16bc7818; __stripe_sid=dde1dd55-de24-42cd-87ca-f810fbbc65c7930ecd; __cf_bm=gXJMx8ufJ6dJVpApN8nmRxQGfL0wikGtTEd0yQO4OC0-1726469430-1.0.1.1-MN3L0FsXgOVrw7rrJ1.Wh5k9as3PcwnjSSX7UFtcLJceFjjx1uNpiVGERtgAU0MTolt_JiR_LRtU8VemS1bqcw; cf_clearance=yS2.CgzwvwT0pKCBSGskqU.95uuzAYX7F_lIKV0bQkE-1726469460-1.2.1.1-BCKmV7ju7u3L1cy9tWphr7.ybISJxnylXOOMEkcc8F6Wwj0LpkXMtJSbNkdIytYorDDCmSBoS1WKjHlDMbkoOkCRhz.06vIQKUidfXO0f2CQgEIUs76JY4vItyHDB9tzxvo_2EHd5Wf4yfLwSCqt9ZkIzBSgLaL9pjZy98HCV8TySD3GdtWDxI49V6dkoN14RBXwgtXw9aYlJNNKkb1C8P6bRtrGi7Yx7qWrh2VDeJpslb9_hK2cMhPhxYFH7DLiQ5BlGfzzLUcgg0MItO1_TNouf7CcD6FZQFUmnTRjRkI7YRXmwts_OVUUMBuMMMlLuHiD6Iccnen7YenmOKGXa9v2BZIWr9KQQYMlLNT8R7AQp5EfX8.qel493IBeggkmOwu3084YC33bnMnTSDmHd74n0LENMh.RGYZ.1ahTPYJYpsjR0M3P1n1.PsJjb.eD; _dd_s=rum=0&expire=1726470365779; csrftoken=got8eSj7zU7azwzuU43vQdG1ZEn6jojtsSnMwX8ePijOZD89Kj0apMemvu6wUvkk; messages=.eJyLjlaKj88qzs-Lz00tLk5MT1XSMdAxMtVRCi5NTgaKpJXm5FQqFGem56WmKGTmKSQWK7jmpAHVp-spxerg0hyZX6qQkViWCtOYX1qCTzluu3Iz89KrMlINDAyB-mMBD4k6mA:1sq5Zi:rVp0uEEgBDTCD4EU0_yJdST1wg7DaHiLoy4cCF0UzmQ; LEETCODE_SESSION=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfYXV0aF91c2VyX2lkIjoiMTE2MTQ0NDUiLCJfYXV0aF91c2VyX2JhY2tlbmQiOiJkamFuZ28uY29udHJpYi5hdXRoLmJhY2tlbmRzLk1vZGVsQmFja2VuZCIsIl9hdXRoX3VzZXJfaGFzaCI6ImJmNzg0ZDIwZDAzYjNmZGFhYWIwMzZjMTI1NWY2ZjA3ZjA5Y2M1ODMzMzUyZTJmYjliNTliNTNmNGJlZTBlZDEiLCJpZCI6MTE2MTQ0NDUsImVtYWlsIjoibWluZ3poZTAwMUBlLm50dS5lZHUuc2ciLCJ1c2VybmFtZSI6Im1pbmd6aGUwMDEiLCJ1c2VyX3NsdWciOiJtaW5nemhlMDAxIiwiYXZhdGFyIjoiaHR0cHM6Ly9hc3NldHMubGVldGNvZGUuY29tL3VzZXJzL21pbmd6aGUwMDEvYXZhdGFyXzE3MjYzOTExMjgucG5nIiwicmVmcmVzaGVkX2F0IjoxNzI2NDY5NDY2LCJpcCI6IjEwMy42LjE1MC4xNzIiLCJpZGVudGl0eSI6ImZlMDY3M2YyYTQ4ZDA0N2I5MTJiMjdlMmEwYzAyZjlmIiwiZGV2aWNlX3dpdGhfaXAiOlsiNTIyM2JkNDZmNTJlZGI5MDRmZmQxM2I1MTI0NmMyZjciLCIxMDMuNi4xNTAuMTcyIl0sInNlc3Npb25faWQiOjcyNDk1NTkzLCJfc2Vzc2lvbl9leHBpcnkiOjEyMDk2MDB9.A9eUZJe-xS88ZQdUQz4mzVbvFOLscZ3jM4Sov1WUg5Y; _gat=1; 87b5a3c3f1a55520_gr_cs1=Elfsong; _ga=GA1.1.834222855.1726468155; __gads=ID=f3ee5a8ecd8f243f:T=1726468185:RT=1726469509:S=ALNI_MZ4MjvBIlxHrTDaYOQwP7JfmfHn3g; __gpi=UID=00000f0b518d97cf:T=1726468185:RT=1726469509:S=ALNI_MarGVkwL2dkg-qW2E4hJ7tLalCkyA; __eoi=ID=733ad53aa4e60c53:T=1726468185:RT=1726469509:S=AA-AfjbY0NlAm2jXEaYHV0DK2M2a; FCNEC=%5B%5B%22AKsRol92mQP8fHHb3DCRrbOt0E5s5SVrtRcRWxMXwi-VHu4ia9sZQaLRFK0CdskMhih44b9ivuCDN4rj7xcDs6DczmU7ey9KxZZJBp1eMJAFVojCLui9wq5x_uL-k0O2BPx5EmeaS6rlJNWN4V17Lo2zwwwRe4jahw%3D%3D%22%5D%5D; _ga_CDRWKZTDEX=GS1.1.1726468154.1.1.1726469518.39.0.0; __cf_bm=mDOJnGUdUE5YOhP97eaD48LKxe9kcp21PTRDlEAbCxI-1726468437-1.0.1.1-N5amPG2EUPXCiGt6zd.1kdvXneS4m.vAdAAyvvjk7bBQd31NYWDP6oL_vCFJUhWKN8CnYTh4zVYRDjqPM2jYeg',
+            'cookie': '__cf_bm=hwPOXWMt4pazNPEn_1XOZVaRKg6Pp8vNtrsOvoL.gcU-1726555932-1.0.1.1-_B3WDzfnaiTrzcne9PNl3dnrHyMQKTZA4qsSuNYiG8VTPrSMOxvn0tfyq0aEFJ_tdNuDIB7N5n0krasPVwAB6Q; _gid=GA1.2.829174000.1726555933; _gat=1; gr_user_id=7c78d549-da82-46a3-9fe1-96401331ca77; 87b5a3c3f1a55520_gr_session_id=445e6197-8643-4f70-a20e-b15237bbad57; ip_check=(false, "137.132.27.180"); 87b5a3c3f1a55520_gr_session_id_sent_vst=445e6197-8643-4f70-a20e-b15237bbad57; cf_clearance=dgyyZSRwhAAnR8Fq9HSyIFRRN3f_nS7RpGL2CtHHDx4-1726555934-1.2.1.1-9njVWgExmFz0ljwY1.AC1DKXQULWouN63p3c515oEJE6F4y.mwi_TeM3nuhkHY6K4ci5kUuPyPmR8VeWh13H00NhQvu1jApUsxckACrcYXDWzr6iD8s_9yiAn6GWrZvcRe.eCckUBJG.pxWAcyySKBBrwnB5mJ9l4ykCA7T31ZI5tSpK8fYOIa8RlNbIjyUMknvn8VoxYmLi1sNxWWtZ1UJJd7B0sG8WIcDMzy_YgXUHxghNcSJTb3G70BG3CMa460_7AaRqMJ7zkrD3M8BlLTeZmZGUapqGoULe73.pIaGnLSjDno503kVcmIDEEZdDzs07WKe2s8h7A94SVjs.0c9ao82aL8bwBhOljX9ypJL4ybRUajEUurlibosNkxCp0nh_vJhk47fKd1id5_2dzn.aNQxo9vKS0rBlFhrnllYE7G9.Pw1vRIPtOtrzlvf8; csrftoken=pZYQ3RmWmTUYAAVQiKGZOQzqgYdxVGiiZDrCz0tAqAhOcccNsZqHtizTIdViO3Dz; messages=W1siX19qc29uX21lc3NhZ2UiLDAsMjUsIlN1Y2Nlc3NmdWxseSBzaWduZWQgaW4gYXMgbWluZ3poZTAwMS4iXV0:1sqS4T:kUAaFjXqHzHFj9EO5DnJMKdbK-j8zDMDDfl1glyJNwY; LEETCODE_SESSION=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfYXV0aF91c2VyX2lkIjoiMTE2MTQ0NDUiLCJfYXV0aF91c2VyX2JhY2tlbmQiOiJkamFuZ28uY29udHJpYi5hdXRoLmJhY2tlbmRzLk1vZGVsQmFja2VuZCIsIl9hdXRoX3VzZXJfaGFzaCI6ImJmNzg0ZDIwZDAzYjNmZGFhYWIwMzZjMTI1NWY2ZjA3ZjA5Y2M1ODMzMzUyZTJmYjliNTliNTNmNGJlZTBlZDEiLCJpZCI6MTE2MTQ0NDUsImVtYWlsIjoibWluZ3poZTAwMUBlLm50dS5lZHUuc2ciLCJ1c2VybmFtZSI6Im1pbmd6aGUwMDEiLCJ1c2VyX3NsdWciOiJtaW5nemhlMDAxIiwiYXZhdGFyIjoiaHR0cHM6Ly9hc3NldHMubGVldGNvZGUuY29tL3VzZXJzL21pbmd6aGUwMDEvYXZhdGFyXzE3MjYzOTExMjgucG5nIiwicmVmcmVzaGVkX2F0IjoxNzI2NTU1OTQxLCJpcCI6IjEzNy4xMzIuMjcuMTgwIiwiaWRlbnRpdHkiOiJmZTA2NzNmMmE0OGQwNDdiOTEyYjI3ZTJhMGMwMmY5ZiIsImRldmljZV93aXRoX2lwIjpbIjUyMjNiZDQ2ZjUyZWRiOTA0ZmZkMTNiNTEyNDZjMmY3IiwiMTM3LjEzMi4yNy4xODAiXSwic2Vzc2lvbl9pZCI6NzI1OTgzNjAsIl9zZXNzaW9uX2V4cGlyeSI6MTIwOTYwMH0.H5lCwPSicaUx3dgmPTbXgEhQIjoP8xTvWjxaZQnuuJs; 87b5a3c3f1a55520_gr_last_sent_sid_with_cs1=445e6197-8643-4f70-a20e-b15237bbad57; 87b5a3c3f1a55520_gr_last_sent_cs1=mingzhe001; INGRESSCOOKIE=c615ca062de54d71f512ac0c3a702bde|8e0876c7c1464cc0ac96bc2edceabd27; _dd_s=rum=0&expire=1726556844885; 87b5a3c3f1a55520_gr_cs1=mingzhe001; _ga=GA1.1.695003655.1726555933; _ga_CDRWKZTDEX=GS1.1.1726555932.1.1.1726555949.43.0.0',
             'origin': 'https://leetcode.com',
             'priority': 'u=1, i',
             'referer': 'https://leetcode.com/problems/',
@@ -312,7 +319,7 @@ if __name__ == "__main__":
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-            'x-csrftoken': 'got8eSj7zU7azwzuU43vQdG1ZEn6jojtsSnMwX8ePijOZD89Kj0apMemvu6wUvkk'
+            'x-csrftoken': 'pZYQ3RmWmTUYAAVQiKGZOQzqgYdxVGiiZDrCz0tAqAhOcccNsZqHtizTIdViO3Dz'
         }
         leetcode_client = LeetCodeRetrival(lang="cpp", mode=args.mode, headers=headers)
         for i in tqdm(range(args.start, args.end)):
