@@ -10,6 +10,7 @@
 import os
 import time
 import json
+import uuid
 import prompts
 import requests
 import argparse
@@ -26,7 +27,7 @@ def retry(func):
                 result = func(*args, **kwargs)
                 return result
             except Exception as e:
-                sleep_time = 2**(i)
+                sleep_time = 3**(i)
                 time.sleep(sleep_time)
         return None
     return wrap
@@ -38,7 +39,7 @@ def vital_retry(func):
                 result = func(*args, **kwargs)
                 return result
             except Exception as e:
-                sleep_time = 2**(i+2)
+                sleep_time = 2**(i)
                 time.sleep(sleep_time)
         return None
     return wrap
@@ -181,7 +182,7 @@ class LeetCodeRetrival:
         response = self.retrieval(prompt_payload)
         return response
 
-    @vital_retry
+    # @vital_retry
     def submission_retrieval(self, questionSlug, lang):
         submission_payload = json.dumps({
             "query": "query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: Int, $status: Int) {questionSubmissionList(offset: $offset\nlimit: $limit\nlastKey: $lastKey\nquestionSlug: $questionSlug\nlang: $lang\nstatus: $status\n) {submissions {id\ntitleSlug\nstatus\nstatusDisplay\nruntime\nmemory\n}}}",
@@ -192,7 +193,7 @@ class LeetCodeRetrival:
             raise LookupError("Null Response")
         return response_json['data']['questionSubmissionList']['submissions']
     
-    @vital_retry
+    # @vital_retry
     def submission_detail_retrieval(self, submission_id):
         submission_detail_payload = json.dumps({
             "query": "query submissionDetails($submissionId: Int!) {submissionDetails(submissionId: $submissionId) {runtime\nruntimeDistribution\nmemory\nmemoryDistribution\ncode\n}}",
@@ -281,7 +282,8 @@ class LeetCodeRetrival:
         
         if instances:
             ds = Dataset.from_pandas(pd.DataFrame(data=instances))
-            ds.push_to_hub("Elfsong/venus_new", f"{self.lang}-{start}-{start+range_-1}")
+            ds_name = str(uuid.uuid1())
+            ds.push_to_hub("Elfsong/venus_new", f"{self.lang}-{ds_name}")
            
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
@@ -328,7 +330,6 @@ if __name__ == "__main__":
             'x-csrftoken': 'pZYQ3RmWmTUYAAVQiKGZOQzqgYdxVGiiZDrCz0tAqAhOcccNsZqHtizTIdViO3Dz'
         }
         
-    
     leetcode_client = LeetCodeRetrival(lang=args.language, mode=args.mode, headers=headers)
     
     q_candidates = list()
