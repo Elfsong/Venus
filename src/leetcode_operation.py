@@ -53,9 +53,15 @@ class LeetCodeRetrival:
         self.model_token = os.getenv("OPENAI_API_KEY")
         self.lang_code_mapping = { "cpp": 0, "python": 2, "golang": 10, "python3": 11, }
         self.lang_code = self.lang_code_mapping[self.lang]
+        self.question_ids = set()
         
         if self.mode == "submit":
             self.openai_client = OpenAIClient("gpt-4o", model_token=self.model_token)
+        
+        if self.mode == "retrieval":
+            self.dataset = load_dataset("Elfsong/venus_new", self.lang)
+            for instance in self.dataset['train']:
+                self.question_ids.add(instance['question_id'])
     
     def runtime_range(self, instance):
         instance['rt_list'] = list()
@@ -268,6 +274,7 @@ class LeetCodeRetrival:
         for question in tqdm(question_list, desc="question"):
             if not question['hasSolution']: continue  
             if question['paidOnly']: continue
+            if question['questionId'] in self.question_ids: continue
             instance = self.construct_instance(question)
             if instance:
                 instances += [instance]
@@ -327,10 +334,11 @@ if __name__ == "__main__":
     q_candidates = list()
     for i in tqdm(range(args.start, args.end)):
         if args.mode in ["submit", "statistic"]:
-            leetcode_client.submit_pipeline(i*10, 10)
-        elif args.mode == "retrieval": 
-            candidates = leetcode_client.retrieval_pipeline(i*10, 10, sample_num=2)
+            candidates = leetcode_client.submit_pipeline(i*10, 10)
             q_candidates += [candidates]
+        elif args.mode == "retrieval": 
+            leetcode_client.retrieval_pipeline(i*10, 10, sample_num=2)
+            
             
     print(q_candidates)
     print(len(q_candidates))
