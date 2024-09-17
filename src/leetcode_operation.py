@@ -242,19 +242,21 @@ class LeetCodeRetrival:
             
             submissions = leetcode_client.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
             if submissions:
+                print(f"[+] Found solution 😃")
                 time.sleep(0.5)
             else:
                 candidates += [question['frontendQuestionId']]
-                # print(f"[+] Generating code and submitting...")
-                # code = self.code_generation(question)
-                # for _ in range(2):
-                #     status = self.code_submit(question, code)
-                #     if status == 200:
-                #         print("[+] success")
-                #         time.sleep(10)
-                #         break
-                #     time.sleep(5)
-                #     print("[-] retrying...")
+                if self.mode == "submit":
+                    print(f"[+] Generating code and submitting 🚀")
+                    code = self.code_generation(question)
+                    for _ in range(2):
+                        status = self.code_submit(question, code)
+                        if status == 200:
+                            print("[+] Success Submission  🟢")
+                            time.sleep(10)
+                            break
+                        time.sleep(5)
+                        print("[-] Retrying 🔴")
         return candidates
                     
     
@@ -299,13 +301,7 @@ if __name__ == "__main__":
             'sec-fetch-site': 'same-origin',
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
             'x-csrftoken': 'ru31nv8NWJBPn0GlNk9Snx7w0J6CpIE6jfxkL7PN0e7VPthgLXBsyTdAhaumMaKl'
-        }
-        leetcode_client = LeetCodeRetrival(lang="python3", mode=args.mode, headers=headers)
-        for i in tqdm(range(args.start, args.end)):
-            if args.mode == "submit":
-                leetcode_client.submit_pipeline(i*10, 10)
-            elif args.mode == "retrieval": 
-                leetcode_client.retrieval_pipeline(i*10, 10, sample_num=2)
+        }        
     elif args.language == "cpp":
         headers = {
             'accept': '*/*',
@@ -324,17 +320,19 @@ if __name__ == "__main__":
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
             'x-csrftoken': 'pZYQ3RmWmTUYAAVQiKGZOQzqgYdxVGiiZDrCz0tAqAhOcccNsZqHtizTIdViO3Dz'
         }
-        leetcode_client = LeetCodeRetrival(lang="cpp", mode=args.mode, headers=headers)
         
-        q_candidates = list()
-        for i in tqdm(range(args.start, args.end)):
-            if args.mode == "submit":
-                leetcode_client.submit_pipeline(i*10, 10)
-            elif args.mode == "retrieval": 
-                candidates = leetcode_client.retrieval_pipeline(i*10, 10, sample_num=2)
-                q_candidates += [candidates]
-                
-        print(q_candidates)
-        print(len(q_candidates))
+    
+    leetcode_client = LeetCodeRetrival(lang=args.language, mode=args.mode, headers=headers)
+    
+    q_candidates = list()
+    for i in tqdm(range(args.start, args.end)):
+        if args.mode in ["submit", "statistic"]:
+            leetcode_client.submit_pipeline(i*10, 10)
+        elif args.mode == "retrieval": 
+            candidates = leetcode_client.retrieval_pipeline(i*10, 10, sample_num=2)
+            q_candidates += [candidates]
+            
+    print(q_candidates)
+    print(len(q_candidates))
         
 
