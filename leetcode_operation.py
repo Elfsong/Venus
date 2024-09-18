@@ -41,7 +41,7 @@ def vital_retry(func):
                 return result
             except Exception as e:
                 print(f"❌")
-                time.sleep(1)
+                time.sleep(5)
         return None
     return wrap
 
