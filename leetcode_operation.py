@@ -142,7 +142,7 @@ class LeetCodeRetrival:
             }
                 
             # Submission Discribution
-            time.sleep(0.3)
+            time.sleep(0.5)
             submissions = leetcode_client.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
             if not submissions: return None
             
