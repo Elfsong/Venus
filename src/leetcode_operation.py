@@ -60,7 +60,7 @@ class LeetCodeRetrival:
             self.openai_client = OpenAIClient("gpt-4o", model_token=self.model_token)
         
         if self.mode == "retrieval":
-            self.dataset = load_dataset("Elfsong/venus_new", self.lang)
+            self.dataset = load_dataset("Elfsong/venus", self.lang)
             for instance in self.dataset['train']:
                 self.question_ids.add(instance['question_id'])
     
@@ -73,6 +73,7 @@ class LeetCodeRetrival:
             for index in range(self.sample_num):
                 response = leetcode_client.runtime_retrieval(question_id=question_id, lang=self.lang, index=index, runtime=rt)
                 if response and response['data']['codeWithRuntime']:
+                    print("[+] Get A Solution 🌠")
                     instance['rt_list'] += [{
                         "code": response['data']['codeWithRuntime']['code'],
                         "runtime": rt
@@ -91,6 +92,7 @@ class LeetCodeRetrival:
             for index in range(self.sample_num):
                 response = leetcode_client.memory_retrieval(question_id=question_id, lang=self.lang, index=index, memory=mm)
                 if response and response['data']['codeWithMemory']:
+                    print("[+] Get A Solution 🌠")
                     instance['mm_list'] += [{
                         "code": response['data']['codeWithMemory']['code'],
                         "memory": mm
@@ -266,7 +268,6 @@ class LeetCodeRetrival:
                         print("[-] Retrying 🔴")
         return candidates
                     
-    
     def retrieval_pipeline(self, start, range_, sample_num):
         instances  = list()
         self.sample_num = sample_num
@@ -283,7 +284,7 @@ class LeetCodeRetrival:
         if instances:
             ds = Dataset.from_pandas(pd.DataFrame(data=instances))
             ds_name = str(uuid.uuid1())
-            ds.push_to_hub("Elfsong/venus_new", f"{self.lang}-{ds_name}")
+            ds.push_to_hub("Elfsong/venus_temp", f"{self.lang}-{ds_name}")
            
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
