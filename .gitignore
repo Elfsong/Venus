@@ -2,3 +2,4 @@ src/__pycache__/*
 playground.ipynb
 .vscode/launch.json
 token.sh
+google_setup.sh
