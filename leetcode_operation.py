@@ -22,7 +22,7 @@ from datasets import Dataset, load_dataset
 
 def retry(func):
     def wrap(*args, **kwargs):
-        for i in range(4):
+        for i in range(3):
             try:
                 result = func(*args, **kwargs)
                 return result
@@ -89,7 +89,7 @@ class LeetCodeRetrival:
         question_id =  instance['question_id']
         question_name = instance['name']
         
-        print(f"[+] {question_name} Runtime Solutions: ")
+        print(f"[+] Runtime Solutions: ")
         for rt, pl in instance['runtimeDistribution']['distribution']:
             print(f"[{rt} ms]", end=" ", flush=True)
             for index in range(self.sample_num):
@@ -104,7 +104,7 @@ class LeetCodeRetrival:
                 else:
                     break
         rt_list_len = len(instance['rt_list'])
-        print(f"\n🟢 [{question_id}] got [{rt_list_len}] runtime solutions.")
+        print(f"\n🟢 [{rt_list_len}] runtime solutions.")
         instance['rt_solution_count'] = rt_list_len
     
     def memory_range(self, instance):
@@ -112,7 +112,7 @@ class LeetCodeRetrival:
         question_id =  instance['question_id']
         question_name = instance['name']
         
-        print(f"[+] {question_name} Memory Solutions")
+        print(f"[+] Memory Solutions")
         for mm, pl in instance['memoryDistribution']['distribution']:
             print(f'[{mm} kb]', end=" ", flush=True)
             for index in range(self.sample_num):
@@ -128,7 +128,7 @@ class LeetCodeRetrival:
                 else:
                     break
         mm_list_len = len(instance['mm_list'])
-        print(f"\n🟢 [{question_id}] got [{mm_list_len}] memory solutions.")
+        print(f"\n🟢 [{mm_list_len}] memory solutions.")
         instance['mm_solution_count'] = mm_list_len
     
     def construct_instance(self, question):
