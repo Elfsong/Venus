@@ -302,8 +302,8 @@ class LeetCodeRetrival:
             
             print(f"====================== {self.lang} Question:", question['frontendQuestionId'], question['questionId'], question['titleSlug'])
 
-            if question['questionId'] in self.question_ids: 
-                question_id = question['questionId']
+            question_id = question['questionId']
+            if question_id in self.question_ids: 
                 print(f"[+] Found [{question_id}] in existing datasets 😃")
             else:
                 print(f"[+] [{question_id}] Retrieving... 🚀")
