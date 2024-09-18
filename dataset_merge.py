@@ -6,7 +6,7 @@ from pathlib import Path
 from datasets import Dataset, load_dataset
 
 def get_subsets():
-    pathlist = Path("/home/nus_cisco_wp1/Projects/Venus/venus_temp").glob('cpp-*')
+    pathlist = Path("/home/nus_cisco_wp1/Projects/venus_temp").glob('cpp-*')
     subsets = [path.name for path in pathlist]
     return subsets
 

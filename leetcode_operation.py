@@ -92,7 +92,7 @@ class LeetCodeRetrival:
             for index in range(self.sample_num):
                 response = leetcode_client.runtime_retrieval(question_id=question_id, lang=self.lang, index=index, runtime=rt)
                 if response and response['data']['codeWithRuntime']:
-                    print("[+] Get A Solution 🌠")
+                    print("[+] Get Solution 🌠")
                     instance['rt_list'] += [{
                         "code": response['data']['codeWithRuntime']['code'],
                         "runtime": rt
@@ -111,7 +111,7 @@ class LeetCodeRetrival:
             for index in range(self.sample_num):
                 response = leetcode_client.memory_retrieval(question_id=question_id, lang=self.lang, index=index, memory=mm)
                 if response and response['data']['codeWithMemory']:
-                    print("[+] Get A Solution 🌠")
+                    print("[+] Get Solution 🌠")
                     instance['mm_list'] += [{
                         "code": response['data']['codeWithMemory']['code'],
                         "memory": mm
