@@ -90,6 +90,7 @@ class LeetCodeRetrival:
             question_name = instance['name']
             print(f"Question [{question_id}] - [{question_name}] - Runtime [{rt}]")
             for index in range(self.sample_num):
+                time.sleep(0.3)
                 response = leetcode_client.runtime_retrieval(question_id=question_id, lang=self.lang, index=index, runtime=rt)
                 if response and response['data']['codeWithRuntime']:
                     print("[+] Get Solution 🌠")
@@ -109,6 +110,7 @@ class LeetCodeRetrival:
             question_name = instance['name']
             print(f"Question [{question_id}] - [{question_name}] - Memory [{mm}]")
             for index in range(self.sample_num):
+                time.sleep(0.3)
                 response = leetcode_client.memory_retrieval(question_id=question_id, lang=self.lang, index=index, memory=mm)
                 if response and response['data']['codeWithMemory']:
                     print("[+] Get Solution 🌠")
