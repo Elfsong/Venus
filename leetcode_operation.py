@@ -103,7 +103,7 @@ class LeetCodeRetrival:
                 else:
                     break
         rt_list_len = len(instance['rt_list'])
-        print(f"\n[+] [{question_id}] got [{rt_list_len}] runtime solutions.")
+        print(f"\n[🟢] [{question_id}] got [{rt_list_len}] runtime solutions.")
         instance['rt_solution_count'] = rt_list_len
     
     def memory_range(self, instance):
@@ -127,7 +127,7 @@ class LeetCodeRetrival:
                 else:
                     break
         mm_list_len = len(instance['mm_list'])
-        print(f"\n[+] [{question_id}] got [{mm_list_len}] memory solutions.")
+        print(f"\n[🟢] [{question_id}] got [{mm_list_len}] memory solutions.")
         instance['mm_solution_count'] = mm_list_len
     
     def construct_instance(self, question):
@@ -142,11 +142,11 @@ class LeetCodeRetrival:
             }
                 
             # Submission Discribution
-            time.sleep(0.5)
+            time.sleep(1)
             submissions = self.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
             if not submissions: return None
             
-            time.sleep(0.5)
+            time.sleep(1)
             submission_details = self.submission_detail_retrieval(submission_id=submissions[0]['id'])
             if not submission_details: return None
             
@@ -215,11 +215,12 @@ class LeetCodeRetrival:
     def submission_retrieval(self, questionSlug, lang):
         submission_payload = json.dumps({
             "query": "query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: Int, $status: Int) {questionSubmissionList(offset: $offset\nlimit: $limit\nlastKey: $lastKey\nquestionSlug: $questionSlug\nlang: $lang\nstatus: $status\n) {submissions {id\ntitleSlug\nstatus\nstatusDisplay\nruntime\nmemory\n}}}",
-            "variables": {"questionSlug": questionSlug, "status": 10, "lang": lang, "offset": 0, "limit": 1 }
+            "variables": {"questionSlug": questionSlug, "status": 10, "lang": lang, "offset": 0, "limit": 1, "lastKey": None}
         })
         response_json = self.retrieval(submission_payload)
         if not response_json['data']['questionSubmissionList']:
-            raise LookupError("Null Response")
+            return None
+            # raise LookupError("Null Response")
         return response_json['data']['questionSubmissionList']['submissions']
     
     # @vital_retry
@@ -230,7 +231,8 @@ class LeetCodeRetrival:
         })
         response_json = self.retrieval(submission_detail_payload)
         if not response_json['data']['submissionDetails']:
-            raise LookupError("Null Response")
+            return None
+            # raise LookupError("Null Response")
         return response_json['data']['submissionDetails']
         
     @retry
