@@ -93,7 +93,7 @@ class LeetCodeRetrival:
                 time.sleep(0.3)
                 response = leetcode_client.runtime_retrieval(question_id=question_id, lang=self.lang, index=index, runtime=rt)
                 if response and response['data']['codeWithRuntime']:
-                    print("[+] Get Solution 🌠")
+                    print("[+] Get Solution.")
                     instance['rt_list'] += [{
                         "code": response['data']['codeWithRuntime']['code'],
                         "runtime": rt
@@ -113,7 +113,7 @@ class LeetCodeRetrival:
                 time.sleep(0.3)
                 response = leetcode_client.memory_retrieval(question_id=question_id, lang=self.lang, index=index, memory=mm)
                 if response and response['data']['codeWithMemory']:
-                    print("[+] Get Solution 🌠")
+                    print("[+] Get Solution")
                     instance['mm_list'] += [{
                         "code": response['data']['codeWithMemory']['code'],
                         "memory": mm
@@ -134,9 +134,6 @@ class LeetCodeRetrival:
                 'topics': [topic['slug'] for topic in question['topicTags']],
             }
                 
-            # Skip dataset questions
-            if 'database' in instance['topics']: return None
-            
             # Submission Discribution
             submissions = leetcode_client.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
             if not submissions: return None
@@ -292,13 +289,20 @@ class LeetCodeRetrival:
         self.sample_num = sample_num
         question_list = self.question_retrieval(start, range_)
         
-        for question in tqdm(question_list, desc="question"):
+        for question in question_list:
             if not question['hasSolution']: continue  
             if question['paidOnly']: continue
-            if question['questionId'] in self.question_ids: continue
-            instance = self.construct_instance(question)
-            if instance:
-                instances += [instance]
+            
+            print(f"====================== {self.lang} Question:", question['frontendQuestionId'], question['questionId'], question['titleSlug'])
+
+            if question['questionId'] in self.question_ids: 
+                question_id = question['questionId']
+                print(f"[+] Found [{question_id}] in existing datasets 😃")
+            else:
+                print(f"[+] [{question_id}] Retrieving... 🚀")
+                instance = self.construct_instance(question)
+                if instance:
+                    instances += [instance]
         
         if instances:
             ds = Dataset.from_pandas(pd.DataFrame(data=instances))
@@ -312,7 +316,6 @@ if __name__ == "__main__":
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=300)
     args = parser.parse_args()
-
 
     leetcode_client = LeetCodeRetrival(lang=args.language, mode=args.mode)
     
