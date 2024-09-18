@@ -103,7 +103,7 @@ class LeetCodeRetrival:
                 else:
                     break
         rt_list_len = len(instance['rt_list'])
-        print(f"[+] [{question_id}] got [{rt_list_len}] runtime solutions.")
+        print(f"\n[+] [{question_id}] got [{rt_list_len}] runtime solutions.")
         instance['rt_solution_count'] = rt_list_len
     
     def memory_range(self, instance):
@@ -127,7 +127,7 @@ class LeetCodeRetrival:
                 else:
                     break
         mm_list_len = len(instance['mm_list'])
-        print(f"[+] [{question_id}] got [{mm_list_len}] memory solutions.")
+        print(f"\n[+] [{question_id}] got [{mm_list_len}] memory solutions.")
         instance['mm_solution_count'] = mm_list_len
     
     def construct_instance(self, question):
