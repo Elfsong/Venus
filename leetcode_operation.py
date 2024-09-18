@@ -90,7 +90,7 @@ class LeetCodeRetrival:
         
         print(f"[+] {question_name} Runtime Solutions: ")
         for rt, pl in instance['runtimeDistribution']['distribution']:
-            print(f"[{rt} ms]", end=" ")
+            print(f"[{rt} ms]", end=" ", flush=True)
             for index in range(self.sample_num):
                 time.sleep(0.3)
                 response = leetcode_client.runtime_retrieval(question_id=question_id, lang=self.lang, index=index, runtime=rt)
@@ -113,7 +113,7 @@ class LeetCodeRetrival:
         
         print(f"[+] {question_name} Memory Solutions")
         for mm, pl in instance['memoryDistribution']['distribution']:
-            print(f'[{mm} kb]', end=" ")
+            print(f'[{mm} kb]', end=" ", flush=True)
             for index in range(self.sample_num):
                 time.sleep(0.3)
                 response = leetcode_client.memory_retrieval(question_id=question_id, lang=self.lang, index=index, memory=mm)
