@@ -320,7 +320,7 @@ class LeetCodeRetrival:
                     instances += [instance]
         
         if instances:
-            print("====================== Uploading the temporary dataset to HF 🎉")
+            print(f"====================== Uploading {len(instances)} instances to HF 🎉")
             ds = Dataset.from_pandas(pd.DataFrame(data=instances))
             ds_name = str(uuid.uuid1())
             ds.push_to_hub("Elfsong/venus_temp", f"{self.lang}-{ds_name}")
