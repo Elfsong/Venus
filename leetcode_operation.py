@@ -93,7 +93,6 @@ class LeetCodeRetrival:
                 time.sleep(0.3)
                 response = leetcode_client.runtime_retrieval(question_id=question_id, lang=self.lang, index=index, runtime=rt)
                 if response and response['data']['codeWithRuntime']:
-                    print("[+] Get Solution.")
                     instance['rt_list'] += [{
                         "code": response['data']['codeWithRuntime']['code'],
                         "runtime": rt
@@ -101,7 +100,9 @@ class LeetCodeRetrival:
                     if not response['data']['codeWithRuntime']['hasNext']: break
                 else:
                     break
-        instance['rt_solution_count'] = len(instance['rt_list'])
+        rt_list_len = len(instance['rt_list'])
+        print(f"[+] [{question_id}] got [{rt_list_len}] runtime solutions.")
+        instance['rt_solution_count'] = rt_list_len
     
     def memory_range(self, instance):
         instance['mm_list'] = list()
@@ -113,7 +114,7 @@ class LeetCodeRetrival:
                 time.sleep(0.3)
                 response = leetcode_client.memory_retrieval(question_id=question_id, lang=self.lang, index=index, memory=mm)
                 if response and response['data']['codeWithMemory']:
-                    print("[+] Get Solution")
+                    
                     instance['mm_list'] += [{
                         "code": response['data']['codeWithMemory']['code'],
                         "memory": mm
@@ -121,7 +122,9 @@ class LeetCodeRetrival:
                     if not response['data']['codeWithMemory']['hasNext']: break
                 else:
                     break
-        instance['mm_solution_count'] = len(instance['mm_list'])
+        mm_list_len = len(instance['mm_list'])
+        print(f"[+] [{question_id}] got [{mm_list_len}] memory solutions.")
+        instance['mm_solution_count'] = mm_list_len
     
     def construct_instance(self, question):
         try:
