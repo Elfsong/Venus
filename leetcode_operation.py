@@ -82,9 +82,12 @@ class LeetCodeRetrival:
             self.openai_client = OpenAIClient("gpt-4o", model_token=self.model_token)
         
         if self.mode == "retrieval":
-            self.dataset = load_dataset("Elfsong/venus", self.lang)
-            for instance in self.dataset['train']:
-                self.question_ids.add(instance['question_id'])
+            try:
+                self.dataset = load_dataset("Elfsong/venus", self.lang)
+                for instance in self.dataset['train']:
+                    self.question_ids.add(instance['question_id'])
+            except ValueError as e:
+                print("Empty Language: ", e)
     
     def runtime_range(self, instance):
         instance['rt_list'] = list()
@@ -306,7 +309,7 @@ class LeetCodeRetrival:
         
         for index, question in enumerate(question_list):
             question_id = int(question['questionId'])
-            print(f"====================== {self.lang} Question:", question['frontendQuestionId'], question['questionId'], question['titleSlug'], f"[{index}/{range_}]")
+            print(f"====================== {self.lang} Question:", question['frontendQuestionId'], question['questionId'], question['titleSlug'], f"[{index+1}/{range_}]")
             if question['paidOnly']: 
                 print(f"[-] Found [{question_id}] paid-only question, skipped ⏭️")
                 continue
