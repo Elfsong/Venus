@@ -22,12 +22,12 @@ from datasets import Dataset, load_dataset
 
 def retry(func):
     def wrap(*args, **kwargs):
-        for i in range(3):
+        for i in range(4):
             try:
                 result = func(*args, **kwargs)
                 return result
             except Exception as e:
-                sleep_time = 2**(i)
+                sleep_time = 1.5**(i)
                 print("🟡", end=" ", flush=True)
                 time.sleep(sleep_time)
         print("🟠", end=" ", flush=True)
@@ -42,7 +42,7 @@ def vital_retry(func):
                 return result
             except Exception as e:
                 print("🔴")
-                time.sleep(5)
+                time.sleep(2**(i+1))
         print("❌")
         return None
     return wrap
@@ -304,9 +304,9 @@ class LeetCodeRetrival:
         self.sample_num = sample_num
         question_list = self.question_retrieval(start, range_)
         
-        for question in question_list:
+        for index, question in enumerate(question_list):
             question_id = int(question['questionId'])
-            print(f"====================== {self.lang} Question:", question['frontendQuestionId'], question['questionId'], question['titleSlug'])
+            print(f"====================== {self.lang} Question:", question['frontendQuestionId'], question['questionId'], question['titleSlug'], f"[{index}/{range_}]")
             if question['paidOnly']: 
                 print(f"[-] Found [{question_id}] paid-only question, skipped ⏭️")
                 continue
