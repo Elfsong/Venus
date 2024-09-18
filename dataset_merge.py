@@ -14,14 +14,14 @@ subsets = get_subsets()
 instances = list()
 instance_ids = set()
 
-print(f"[+] Loading old instances...")
+print(f"🟢 Loading old instances...")
 ds = load_dataset("Elfsong/venus", "cpp")
 for instance in ds['train'].to_list():
     instance_ids.add(instance['question_id'])
     instances.append(instance)
-print(f"[+] [{len(instance_ids)}] old instances Loaded.")
+print(f"🟢 [{len(instance_ids)}] old instances Loaded.")
     
-print("[+] Loading new instances...")
+print(f"🟢 Loading new instances...")
 for subset_name in tqdm(subsets):
     print(f"Current Subset [{subset_name}]")    
     try: 
@@ -37,11 +37,13 @@ for subset_name in tqdm(subsets):
         print(f"{subset_name} Error: {e}")
 print(f"[+] [{len(instance_ids)}] old instances Loaded.")
     
-print("[+] Uploading the new dataset...")
-ds = Dataset.from_pandas(pd.DataFrame(data=instances))
+print("🟢 Uploading the new dataset...")
+df = pd.DataFrame(data=instances)
+df['question_id'] = df['question_id'].astype('int64')
+ds = Dataset.from_pandas(df)
 ds.push_to_hub("Elfsong/venus", "cpp")
 
-print("[+] Checking the new dataset...")
+print("🟢 Checking the new dataset...")
 ds = load_dataset("Elfsong/venus", "cpp")
 print(ds['train'])
 

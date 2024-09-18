@@ -133,7 +133,7 @@ class LeetCodeRetrival:
     def construct_instance(self, question):
         try:
             instance = {
-                'question_id': question['questionId'],
+                'question_id': int(question['questionId']),
                 'name': question['titleSlug'],
                 'content': question['content'],
                 'acRate': question['acRate'],
