@@ -11,12 +11,12 @@ import os
 import time
 import json
 import uuid
-import prompts
 import requests
 import argparse
 import pandas as pd
 from tqdm import tqdm
-from utils import OpenAIClient
+import src.prompts as prompts
+from src.utils import OpenAIClient
 from multiprocessing import Pool, Manager
 from datasets import Dataset, load_dataset
 
@@ -45,10 +45,9 @@ def vital_retry(func):
     return wrap
 
 class LeetCodeRetrival:
-    def __init__(self, lang, mode, headers) -> None:
+    def __init__(self, lang, mode) -> None:
         self.lang = lang
         self.mode = mode
-        self.headers = headers
         self.instances = list()
         self.url = "https://leetcode.com/graphql/"
         self.model_token = os.getenv("OPENAI_API_KEY")
@@ -228,7 +227,7 @@ class LeetCodeRetrival:
         
     @retry
     def retrieval(self, payload):
-        response = requests.request("POST", self.url, headers=self.headers, data=payload)
+        response = requests.request("POST", self.url, headers=self.leetcode_headers, data=payload)
         response_json = response.json()
         if not response_json['data'][next(iter(response_json['data']))]:
             raise LookupError("Null Response")
@@ -258,7 +257,7 @@ class LeetCodeRetrival:
             "question_id": instance['questionId'],
             "typed_code": code
         })
-        response = requests.request("POST", url, headers=self.headers, data=payload, timeout=5)
+        response = requests.request("POST", url, headers=self.leetcode_headers, data=payload, timeout=5)
         return response.status_code
     
     def submit_pipeline(self, start, range_):
@@ -313,13 +312,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    leetcode_client = LeetCodeRetrival(lang=args.language, mode=args.mode, headers=self.leetcode_headers)
+    leetcode_client = LeetCodeRetrival(lang=args.language, mode=args.mode)
     
     for i in tqdm(range(args.start, args.end)):
         if args.mode in ["submit", "statistic"]:
             leetcode_client.submit_pipeline(i*10, 10)
         elif args.mode == "retrieval": 
             leetcode_client.retrieval_pipeline(i*10, 10, sample_num=2)
+        else:
+            print(f"Unknown Mode: {args.mode}")
     
         
 
