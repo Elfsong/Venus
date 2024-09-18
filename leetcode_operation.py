@@ -138,6 +138,8 @@ class LeetCodeRetrival:
             submissions = leetcode_client.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
             if not submissions: return None
             
+            time.sleep(0.5)
+            
             submission_details = leetcode_client.submission_detail_retrieval(submission_id=submissions[0]['id'])
             if not submission_details: return None
             
