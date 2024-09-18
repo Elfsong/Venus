@@ -85,9 +85,10 @@ class LeetCodeRetrival:
     
     def runtime_range(self, instance):
         instance['rt_list'] = list()
+        question_id =  instance['question_id']
+        question_name = instance['name']
+        
         for rt, pl in instance['runtimeDistribution']['distribution']:
-            question_id =  instance['question_id']
-            question_name = instance['name']
             print(f"Question [{question_id}] - [{question_name}] - Runtime [{rt}]")
             for index in range(self.sample_num):
                 time.sleep(0.3)
@@ -106,9 +107,10 @@ class LeetCodeRetrival:
     
     def memory_range(self, instance):
         instance['mm_list'] = list()
+        question_id =  instance['question_id']
+        question_name = instance['name']
+        
         for mm, pl in instance['memoryDistribution']['distribution']:
-            question_id =  instance['question_id']
-            question_name = instance['name']
             print(f"Question [{question_id}] - [{question_name}] - Memory [{mm}]")
             for index in range(self.sample_num):
                 time.sleep(0.3)
