@@ -89,7 +89,7 @@ class LeetCodeRetrival:
         question_name = instance['name']
         
         for rt, pl in instance['runtimeDistribution']['distribution']:
-            print(f"Question [{question_id}] - [{question_name}] - Runtime [{rt}]")
+            print(f"[+] Runtime Solutions - [{rt}]")
             for index in range(self.sample_num):
                 time.sleep(0.3)
                 response = leetcode_client.runtime_retrieval(question_id=question_id, lang=self.lang, index=index, runtime=rt)
@@ -111,7 +111,7 @@ class LeetCodeRetrival:
         question_name = instance['name']
         
         for mm, pl in instance['memoryDistribution']['distribution']:
-            print(f"Question [{question_id}] - [{question_name}] - Memory [{mm}]")
+            print(f"[+] Memory Solutions - [{mm}]")
             for index in range(self.sample_num):
                 time.sleep(0.3)
                 response = leetcode_client.memory_retrieval(question_id=question_id, lang=self.lang, index=index, memory=mm)
@@ -140,11 +140,11 @@ class LeetCodeRetrival:
             }
                 
             # Submission Discribution
+            time.sleep(0.3)
             submissions = leetcode_client.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
             if not submissions: return None
             
             time.sleep(0.5)
-            
             submission_details = leetcode_client.submission_detail_retrieval(submission_id=submissions[0]['id'])
             if not submission_details: return None
             
