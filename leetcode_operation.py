@@ -28,8 +28,9 @@ def retry(func):
                 return result
             except Exception as e:
                 sleep_time = 3**(i)
-                print(f"🔴", end=" ", flush=True)
+                print("🟡", end=" ", flush=True)
                 time.sleep(sleep_time)
+        print("🔴", end=" ", flush=True)
         return None
     return wrap
 
@@ -40,8 +41,9 @@ def vital_retry(func):
                 result = func(*args, **kwargs)
                 return result
             except Exception as e:
-                print(f"❌")
+                print("🟠")
                 time.sleep(5)
+        print("🔴")
         return None
     return wrap
 
