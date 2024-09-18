@@ -22,12 +22,13 @@ from datasets import Dataset, load_dataset
 
 def retry(func):
     def wrap(*args, **kwargs):
-        for i in range(3):
+        for i in range(4):
             try:
                 result = func(*args, **kwargs)
                 return result
             except Exception as e:
-                sleep_time = 3**(i)
+                sleep_time = 2**(i)
+                print(f"🔴", end=" ", flush=True)
                 time.sleep(sleep_time)
         return None
     return wrap
@@ -39,8 +40,8 @@ def vital_retry(func):
                 result = func(*args, **kwargs)
                 return result
             except Exception as e:
-                sleep_time = 2**(i)
-                time.sleep(sleep_time)
+                print(f"❌", end=" ", flush=True)
+                time.sleep(1)
         return None
     return wrap
 
@@ -103,7 +104,7 @@ class LeetCodeRetrival:
                 else:
                     break
         rt_list_len = len(instance['rt_list'])
-        print(f"\n[🟢] [{question_id}] got [{rt_list_len}] runtime solutions.")
+        print(f"\n🟢 [{question_id}] got [{rt_list_len}] runtime solutions.")
         instance['rt_solution_count'] = rt_list_len
     
     def memory_range(self, instance):
@@ -127,7 +128,7 @@ class LeetCodeRetrival:
                 else:
                     break
         mm_list_len = len(instance['mm_list'])
-        print(f"\n[🟢] [{question_id}] got [{mm_list_len}] memory solutions.")
+        print(f"\n🟢 [{question_id}] got [{mm_list_len}] memory solutions.")
         instance['mm_solution_count'] = mm_list_len
     
     def construct_instance(self, question):
@@ -142,7 +143,6 @@ class LeetCodeRetrival:
             }
                 
             # Submission Discribution
-            time.sleep(1)
             submissions = self.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
             if not submissions: return None
             
@@ -211,7 +211,7 @@ class LeetCodeRetrival:
         response = self.retrieval(prompt_payload)
         return response
 
-    # @vital_retry
+    @vital_retry
     def submission_retrieval(self, questionSlug, lang):
         submission_payload = json.dumps({
             "query": "query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: Int, $status: Int) {questionSubmissionList(offset: $offset\nlimit: $limit\nlastKey: $lastKey\nquestionSlug: $questionSlug\nlang: $lang\nstatus: $status\n) {submissions {id\ntitleSlug\nstatus\nstatusDisplay\nruntime\nmemory\n}}}",
@@ -219,11 +219,11 @@ class LeetCodeRetrival:
         })
         response_json = self.retrieval(submission_payload)
         if not response_json['data']['questionSubmissionList']:
-            return None
-            # raise LookupError("Null Response")
+            # return None
+            raise LookupError("Null Response")
         return response_json['data']['questionSubmissionList']['submissions']
     
-    # @vital_retry
+    @vital_retry
     def submission_detail_retrieval(self, submission_id):
         submission_detail_payload = json.dumps({
             "query": "query submissionDetails($submissionId: Int!) {submissionDetails(submissionId: $submissionId) {runtime\nruntimeDistribution\nmemory\nmemoryDistribution\ncode\n}}",
@@ -231,13 +231,13 @@ class LeetCodeRetrival:
         })
         response_json = self.retrieval(submission_detail_payload)
         if not response_json['data']['submissionDetails']:
-            return None
-            # raise LookupError("Null Response")
+            # return None
+            raise LookupError("Null Response")
         return response_json['data']['submissionDetails']
         
     @retry
     def retrieval(self, payload):
-        response = requests.request("POST", self.url, headers=self.leetcode_headers, data=payload)
+        response = requests.request("GET", self.url, headers=self.leetcode_headers, data=payload)
         response_json = response.json()
         if not response_json['data'][next(iter(response_json['data']))]:
             raise LookupError("Null Response")
