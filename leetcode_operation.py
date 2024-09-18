@@ -27,7 +27,7 @@ def retry(func):
                 result = func(*args, **kwargs)
                 return result
             except Exception as e:
-                sleep_time = 2**(i)
+                sleep_time = 3**(i)
                 print(f"🔴", end=" ", flush=True)
                 time.sleep(sleep_time)
         return None
