@@ -41,9 +41,9 @@ def vital_retry(func):
                 result = func(*args, **kwargs)
                 return result
             except Exception as e:
-                print("🟠")
+                print("🔴")
                 time.sleep(5)
-        print("🔴")
+        print("❌")
         return None
     return wrap
 
@@ -320,6 +320,7 @@ class LeetCodeRetrival:
                     instances += [instance]
         
         if instances:
+            print("====================== Uploading the temporary dataset to HF 🎉")
             ds = Dataset.from_pandas(pd.DataFrame(data=instances))
             ds_name = str(uuid.uuid1())
             ds.push_to_hub("Elfsong/venus_temp", f"{self.lang}-{ds_name}")
