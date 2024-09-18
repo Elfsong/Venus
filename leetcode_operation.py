@@ -93,7 +93,7 @@ class LeetCodeRetrival:
             print(f"[{rt} ms]", end=" ", flush=True)
             for index in range(self.sample_num):
                 time.sleep(0.3)
-                response = leetcode_client.runtime_retrieval(question_id=question_id, lang=self.lang, index=index, runtime=rt)
+                response = self.runtime_retrieval(question_id=question_id, lang=self.lang, index=index, runtime=rt)
                 if response and response['data']['codeWithRuntime']:
                     instance['rt_list'] += [{
                         "code": response['data']['codeWithRuntime']['code'],
@@ -116,7 +116,7 @@ class LeetCodeRetrival:
             print(f'[{mm} kb]', end=" ", flush=True)
             for index in range(self.sample_num):
                 time.sleep(0.3)
-                response = leetcode_client.memory_retrieval(question_id=question_id, lang=self.lang, index=index, memory=mm)
+                response = self.memory_retrieval(question_id=question_id, lang=self.lang, index=index, memory=mm)
                 if response and response['data']['codeWithMemory']:
                     
                     instance['mm_list'] += [{
@@ -143,11 +143,11 @@ class LeetCodeRetrival:
                 
             # Submission Discribution
             time.sleep(0.5)
-            submissions = leetcode_client.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
+            submissions = self.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
             if not submissions: return None
             
             time.sleep(0.5)
-            submission_details = leetcode_client.submission_detail_retrieval(submission_id=submissions[0]['id'])
+            submission_details = self.submission_detail_retrieval(submission_id=submissions[0]['id'])
             if not submission_details: return None
             
             instance['runtimeDistribution'] = json.loads(submission_details['runtimeDistribution'])
@@ -276,7 +276,7 @@ class LeetCodeRetrival:
             if 'database' in [topic['slug'] for topic in question['topicTags']]: continue
             print(f"====================== {self.lang} Question:", question['frontendQuestionId'], question['questionId'], question['titleSlug'])
             
-            submissions = leetcode_client.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
+            submissions = self.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
             if submissions:
                 print(f"[+] Found solution 😃")
                 time.sleep(0.5)
@@ -299,14 +299,14 @@ class LeetCodeRetrival:
         question_list = self.question_retrieval(start, range_)
         
         for question in question_list:
-            if not question['hasSolution']: continue  
-            if question['paidOnly']: continue
-            
+            question_id = int(question['questionId'])
             print(f"====================== {self.lang} Question:", question['frontendQuestionId'], question['questionId'], question['titleSlug'])
-
-            question_id = question['questionId']
+            if question['paidOnly']: 
+                print(f"[-] [{question_id}] is paid-only question, skip ⏭️")
+                continue
             if question_id in self.question_ids: 
                 print(f"[+] Found [{question_id}] in existing datasets 😃")
+                continue
             else:
                 print(f"[+] [{question_id}] Retrieving... 🚀")
                 instance = self.construct_instance(question)
