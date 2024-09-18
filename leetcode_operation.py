@@ -90,8 +90,9 @@ class LeetCodeRetrival:
         instance['rt_list'] = list()
         question_id =  instance['question_id']
         question_name = instance['name']
+        rt_count = len(instance['runtimeDistribution']['distribution'])
+        print(f"[+] Runtime Solutions [{rt_count}]")
         
-        print(f"[+] Runtime Solutions: ")
         for rt, pl in instance['runtimeDistribution']['distribution']:
             print(f"[{rt} ms]", end=" ", flush=True)
             for index in range(self.sample_num):
@@ -113,8 +114,9 @@ class LeetCodeRetrival:
         instance['mm_list'] = list()
         question_id =  instance['question_id']
         question_name = instance['name']
+        mm_count = len(instance['memoryDistribution']['distribution'])
+        print(f"[+] Memory Solutions [{mm_count}]")
         
-        print(f"[+] Memory Solutions")
         for mm, pl in instance['memoryDistribution']['distribution']:
             print(f'[{mm} kb]', end=" ", flush=True)
             for index in range(self.sample_num):
