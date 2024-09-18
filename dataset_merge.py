@@ -19,7 +19,9 @@ ds = load_dataset("Elfsong/venus", "cpp")
 for instance in ds['train'].to_list():
     instance_ids.add(instance['question_id'])
     instances.append(instance)
-print(f"🟢 [{len(instance_ids)}] old instances Loaded.")
+old_instance_count = len(instance_ids)
+print(f"[+] {old_instance_count} instances Loaded.")
+print("=====" * 5)
     
 print(f"🟢 Loading new instances...")
 for subset_name in tqdm(subsets):
@@ -35,15 +37,19 @@ for subset_name in tqdm(subsets):
         print(f"Empty Dataset {subset_name}")
     except Exception as e:
         print(f"{subset_name} Error: {e}")
-print(f"[+] [{len(instance_ids)}] old instances Loaded.")
+new_instance_count = len(instance_ids)
+print(f"[+] {new_instance_count} instances loaded. {new_instance_count-old_instance_count} instances added.")
+print("=====" * 5)
     
 print("🟢 Uploading the new dataset...")
 df = pd.DataFrame(data=instances)
 df['question_id'] = df['question_id'].astype('int64')
 ds = Dataset.from_pandas(df)
 ds.push_to_hub("Elfsong/venus", "cpp")
+print("=====" * 5)
 
 print("🟢 Checking the new dataset...")
 ds = load_dataset("Elfsong/venus", "cpp")
 print(ds['train'])
+print("=====" * 5)
 

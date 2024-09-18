@@ -40,7 +40,7 @@ def vital_retry(func):
                 result = func(*args, **kwargs)
                 return result
             except Exception as e:
-                print(f"❌", end=" ", flush=True)
+                print(f"❌")
                 time.sleep(1)
         return None
     return wrap
