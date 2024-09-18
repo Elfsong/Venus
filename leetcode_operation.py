@@ -302,10 +302,10 @@ class LeetCodeRetrival:
             question_id = int(question['questionId'])
             print(f"====================== {self.lang} Question:", question['frontendQuestionId'], question['questionId'], question['titleSlug'])
             if question['paidOnly']: 
-                print(f"[-] [{question_id}] is paid-only question, skip ⏭️")
+                print(f"[-] Found [{question_id}] paid-only question, skipped ⏭️")
                 continue
             if question_id in self.question_ids: 
-                print(f"[+] Found [{question_id}] in existing datasets 😃")
+                print(f"[+] Found [{question_id}] in existing datasets, skipped 😃")
                 continue
             else:
                 print(f"[+] [{question_id}] Retrieving... 🚀")
