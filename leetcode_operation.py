@@ -30,7 +30,7 @@ def retry(func):
                 sleep_time = 2**(i)
                 print("🟡", end=" ", flush=True)
                 time.sleep(sleep_time)
-        print("🔴", end=" ", flush=True)
+        print("🟠", end=" ", flush=True)
         return None
     return wrap
 
