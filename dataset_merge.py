@@ -13,7 +13,7 @@ parser.add_argument('--language', default="python3")
 args = parser.parse_args()
 
 def get_subsets():
-    pathlist = Path("/home/nus_cisco_wp1/Projects/venus_temp").glob(f'{args.language}-*')
+    pathlist = Path("../venus_temp").glob(f'{args.language}-*')
     subsets = [path.name for path in pathlist]
     return subsets
 
