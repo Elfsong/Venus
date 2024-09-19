@@ -276,24 +276,8 @@ class LeetCodeRetrival:
             "question_id": instance['questionId'],
             "typed_code": code
         })
-        headers = {
-            'accept': '*/*',
-            'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8,zh-CN;q=0.7,zh-HK;q=0.6,zh-TW;q=0.5,zh;q=0.4',
-            'content-type': 'application/json',
-            'cookie': '_gid=GA1.2.1535148603.1726735303; gr_user_id=32512bd3-c65f-458c-8681-f8f5463045b1; ip_check=(false, "137.132.27.180"); __stripe_mid=6126618b-e583-4cb1-b5bb-a8c5310062e2ede87a; __stripe_sid=52c6eae5-ae84-4441-9aeb-d8700b5f4d21a79274; __cf_bm=7VZawBsCFAfn.8DMAt8h16WS1xaNHAg7zuO9GGkIqxI-1726736317-1.0.1.1-hBvJs5cVIPWLgzP1n_0vJRvCAdtRJs.jxzWiP1z_X7_PiI0mtTAmnXxFJQxRNknVCDEuOxINMVT0Gee1OC688Q; cf_clearance=l4xrgNsX4dTH94HAKVVmxw2gpFvcVmnFuMRCcUiXh7I-1726736324-1.2.1.1-xHvFvIDu9KEMXSOsHBnC80NzvKquIaaxfETYBVuoaUJlMZt6sOYgJU3RBdjpw3Vqv6lHTQFV9sdAJcRcwfpP4UUPrZOgZv2_45Qv2dep4tIFqwa8ao_nbbPeNZJgU9SaEoCY2UN4dqnjYt9XO818_Tbko3yAM2mPRVZuSquf9P12XpwFle24u.pb841mV0axFAIq4MUS6QPaJ5yGPhU7lxfhmyoXs8HYaeUMiOeCmxndvgHXC0I03WNamUc8MvgSrbsydIRFTVw1ERmQHboGxv5CxE9nu.36hUZ9._JacKRvuhldU8tFBr4QFnYT.Rab2y41C_YBGY4NVugKS5jBvJOf8ZrNuyml1PJFRXxlZuqzkfFIrNJOk_GcyWUAp.jglntlwL9RXRyUuc2gBGQ4OzwPUrzUk_onanCnRP2jnfmh98O_ucajDPyESlH5rZLN; csrftoken=REahq1iFS4OlpnLrEnuScC6AnjjJO2GNgEi5KPdmtOzqFbFFi2evGTUqCTUPgH3z; messages=.eJx9jUEKwjAQAL-y5JKDqWxCVeg3PEkpIcbYrrSJdJOKvt4ieBOvwwzTtsLaG6dop8Ds-iAUKoNKnFKZgcuZ_Uz3TCkCZ5cLAzHE9ADpfKYlSCgx0wjSoKkrjZXeg8amNo05bBAbRCk69XOy-0xgcEsApj6GC6SSt3_0Y_F-Jdcyjs9vQhEcw0Sxfw0BUa999waohESM:1srD05:JKpPDPPwkc1KIOcmZkxrPKkk2gLpgxqQAA-iNbMTgrE; LEETCODE_SESSION=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfYXV0aF91c2VyX2lkIjoiMTE2MTQ0NDUiLCJfYXV0aF91c2VyX2JhY2tlbmQiOiJkamFuZ28uY29udHJpYi5hdXRoLmJhY2tlbmRzLk1vZGVsQmFja2VuZCIsIl9hdXRoX3VzZXJfaGFzaCI6ImJmNzg0ZDIwZDAzYjNmZGFhYWIwMzZjMTI1NWY2ZjA3ZjA5Y2M1ODMzMzUyZTJmYjliNTliNTNmNGJlZTBlZDEiLCJpZCI6MTE2MTQ0NDUsImVtYWlsIjoibWluZ3poZTAwMUBlLm50dS5lZHUuc2ciLCJ1c2VybmFtZSI6Im1pbmd6aGUwMDEiLCJ1c2VyX3NsdWciOiJtaW5nemhlMDAxIiwiYXZhdGFyIjoiaHR0cHM6Ly9hc3NldHMubGVldGNvZGUuY29tL3VzZXJzL21pbmd6aGUwMDEvYXZhdGFyXzE3MjYzOTExMjgucG5nIiwicmVmcmVzaGVkX2F0IjoxNzI2NzM2MzM3LCJpcCI6IjEzNy4xMzIuMjcuMTgwIiwiaWRlbnRpdHkiOiJmZTA2NzNmMmE0OGQwNDdiOTEyYjI3ZTJhMGMwMmY5ZiIsImRldmljZV93aXRoX2lwIjpbIjUyMjNiZDQ2ZjUyZWRiOTA0ZmZkMTNiNTEyNDZjMmY3IiwiMTM3LjEzMi4yNy4xODAiXSwic2Vzc2lvbl9pZCI6NzI4MjYzNTcsIl9zZXNzaW9uX2V4cGlyeSI6MTIwOTYwMH0.x3hdolKddT6P8ryGYo-_-yOzfwo6dXVYWLe3ejDJ2hY; 87b5a3c3f1a55520_gr_last_sent_sid_with_cs1=594c25ce-1ca5-41bc-9b10-21520d4c781c; 87b5a3c3f1a55520_gr_last_sent_cs1=mingzhe001; 87b5a3c3f1a55520_gr_session_id=594c25ce-1ca5-41bc-9b10-21520d4c781c; 87b5a3c3f1a55520_gr_session_id_sent_vst=594c25ce-1ca5-41bc-9b10-21520d4c781c; _dd_s=rum=0&expire=1726737257599; INGRESSCOOKIE=2d72a96471cb6b2879d9ed56c7a65fb6|8e0876c7c1464cc0ac96bc2edceabd27; 87b5a3c3f1a55520_gr_cs1=mingzhe001; _ga=GA1.1.896039270.1726735303; __gads=ID=cc473ccc7cc06262:T=1726736368:RT=1726736368:S=ALNI_MZJo6sZU24BDi16AVPF28IAfTO9Ng; __gpi=UID=00000f10a7b71202:T=1726736368:RT=1726736368:S=ALNI_Maa6mAh4zcDBGnXjNmwvpfyY-ilAQ; __eoi=ID=8455bdac700a73de:T=1726736368:RT=1726736368:S=AA-AfjaHbZfXSVgXVR1VIF90W5A3; FCNEC=%5B%5B%22AKsRol953ghGkNfTnoUXRc66uUQxB_5i-x5RlOWTP0K4iypjCO2Fag9QYHE0Jyoy_YIbLfGWNEeoWoi4RN5brpxs83Bfybr1R1mx1JopUbHW9Nf4wemkifGHld_hjDLnHqlx6ERZB68p3PKXcJ8965SuuA41jTPFxw%3D%3D%22%5D%5D; _ga_CDRWKZTDEX=GS1.1.1726735302.1.1.1726736374.3.0.0',
-            'origin': 'https://leetcode.com',
-            'priority': 'u=1, i',
-            'referer': 'https://leetcode.com/problems/add-two-numbers/',
-            'sec-ch-ua': '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-            'x-csrftoken': 'REahq1iFS4OlpnLrEnuScC6AnjjJO2GNgEi5KPdmtOzqFbFFi2evGTUqCTUPgH3z'
-        }
-        response = requests.request("POST", url, headers=headers, data=payload, timeout=5)
+
+        response = requests.request("POST", url, headers=self.leetcode_headers, data=payload, timeout=5)
         return response.status_code
     
     def submit_pipeline(self, start, range_):
