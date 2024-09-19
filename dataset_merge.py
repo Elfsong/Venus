@@ -21,7 +21,7 @@ subsets = get_subsets()
 instances = list()
 instance_ids = set()
 
-print(f"🟢 Loading old instances...")
+print(f"🟢 Loading instances from the {args.language} dataset...")
 try:
     ds = load_dataset("Elfsong/venus", args.language)
     for instance in ds['train'].to_list():
@@ -54,7 +54,7 @@ new_instance_count = len(instance_ids)
 print(f"[+] {new_instance_count} instances loaded. {new_instance_count-old_instance_count} instances added.")
 print("=====" * 5)
     
-print("🟢 Uploading the new dataset...")
+print(f"🟢 Uploading the new {args.language} dataset...")
 df = pd.DataFrame(data=instances)
 df['question_id'] = df['question_id'].astype('int64')
 ds = Dataset.from_pandas(df)
