@@ -153,11 +153,15 @@ class LeetCodeRetrival:
             # Submission Discribution
             time.sleep(1)
             submissions = self.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
-            if not submissions: return None
+            if not submissions: 
+                print(f"[-] Can't found any submission 🟡")
+                return None
             
             time.sleep(1)
             submission_details = self.submission_detail_retrieval(submission_id=submissions[0]['id'])
-            if not submission_details: return None
+            if not submission_details:
+                print(f"[-] Can't retrieve the submission detail 🔴")
+                return None
             
             instance['runtimeDistribution'] = json.loads(submission_details['runtimeDistribution'])
             instance['memoryDistribution'] = json.loads(submission_details['memoryDistribution'])
