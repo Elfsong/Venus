@@ -7,7 +7,7 @@ from tqdm import tqdm
 from pathlib import Path
 from datasets import Dataset, load_dataset
 
-  
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--language', default="python3") 
 args = parser.parse_args()
@@ -17,9 +17,9 @@ def get_subsets():
     subsets = [path.name for path in pathlist]
     return subsets
 
-subsets = get_subsets()
 instances = list()
 instance_ids = set()
+subsets = get_subsets()
 
 print(f"🟢 Loading instances from the {args.language} dataset...")
 try:
@@ -31,7 +31,7 @@ try:
             instances.append(instance)
     old_instance_count = len(instance_ids)
     print(f"[+] {old_instance_count} instances Loaded.")
-    print("=====" * 5)
+    print("========" * 5)
 except ValueError as e:
     old_instance_count = 0
     print(f"[-] Empty dataset {args.language}, will create a new dataset.")
@@ -52,17 +52,18 @@ for subset_name in tqdm(subsets):
         print(f"[-] {subset_name} Error: {e}")
 new_instance_count = len(instance_ids)
 print(f"[+] {new_instance_count} instances loaded. [{new_instance_count-old_instance_count}] new instances added 🎉")
-print("=====" * 5)
+print("========" * 5)
     
 print(f"🟢 Uploading the new {args.language} dataset...")
 df = pd.DataFrame(data=instances)
 df['question_id'] = df['question_id'].astype('int64')
 ds = Dataset.from_pandas(df)
 ds.push_to_hub("Elfsong/venus", args.language)
-print("=====" * 5)
+print(f"[+] {args.language} dataset uploaded to the hub.")
+print("========" * 5)
 
 print("🟢 Checking the new dataset...")
 ds = load_dataset("Elfsong/venus", args.language)
-print(ds['train'])
-print("=====" * 5)
+print(f"[+] {len(ds['train'])} instances in the new dataset.")
+print("========" * 5)
 
