@@ -16,7 +16,6 @@ import argparse
 import pandas as pd
 from tqdm import tqdm
 import src.prompts as prompts
-from multiprocessing import Pool, Manager
 from datasets import Dataset, load_dataset
 from src.utils import OpenAIClient, DeepSeekClient
 
@@ -56,9 +55,9 @@ class LeetCodeRetrival:
         self.model_token = os.getenv("CLIENT_API_KEY")
         self.leetcode_cookie = os.getenv("LEETCODE_COOKIE")
         self.leetcode_crsf_token = os.getenv("LEETCODE_CRSF_TOKEN")
-        self.lang_code_mapping = { "cpp": 0, "python": 2, "golang": 10, "python3": 11, }
+        self.lang_code_mapping = { "cpp": 0, "python": 2, "golang": 10, "python3": 11}
         self.lang_code = self.lang_code_mapping[self.lang]
-        self.question_ids = set()
+        self.existing_question_ids = set()
         
         self.leetcode_headers = {
             'accept': '*/*',
@@ -86,7 +85,7 @@ class LeetCodeRetrival:
             try:
                 self.dataset = load_dataset("Elfsong/venus", self.lang)
                 for instance in self.dataset['train']:
-                    self.question_ids.add(instance['question_id'])
+                    self.existing_question_ids.add(instance['question_id'])
             except ValueError as e:
                 print("Empty Language: ", e)
     
@@ -294,7 +293,7 @@ class LeetCodeRetrival:
             if question['paidOnly']: 
                 print(f"[-] Found [{question_id}] is a paid-only question, skipped ⏭️")
                 continue
-            if question_id in self.question_ids: 
+            if question_id in self.existing_question_ids: 
                 print(f"[+] Found [{question_id}] in existing datasets, skipped 😃")
                 continue
             if self.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code):
@@ -330,7 +329,7 @@ class LeetCodeRetrival:
                 print(f"[-] Found [{question_id}] paid-only question, skipped ⏭️")
                 continue
             instance_count += 1
-            if question_id in self.question_ids: 
+            if question_id in self.existing_question_ids: 
                 print(f"[+] Found [{question_id}] in existing datasets, skipped 😃")
                 continue
             else:
