@@ -26,7 +26,25 @@ class Client(object):
     
     def inference(self, context):
         raise NotImplementedError("Don't call the base class directly.")
+
+class DeepSeekClient(Client):
+    def __init__(self, model_name, model_token) -> None:
+        super().__init__(model_name, model_token)
+        self.client = OpenAI(base_url="https://api.deepseek.com", api_key=self.model_token)
     
+    def inference(self, messages):
+        response = self.client.chat.completions.create(
+            response_format={"type":"json_object"},
+            model=self.model_name,
+            messages=messages
+        )
+        raw_response = response.choices[0].message.content
+        try:
+            response = json.loads(raw_response)
+        except Exception as e:
+            print(f'DeepSeekClient Error: {e}')
+            response = raw_response
+        return response
     
 class OpenAIClient(Client):
     def __init__(self, model_name, model_token) -> None:
