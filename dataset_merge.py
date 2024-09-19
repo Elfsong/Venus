@@ -51,7 +51,7 @@ for subset_name in tqdm(subsets):
     except Exception as e:
         print(f"[-] {subset_name} Error: {e}")
 new_instance_count = len(instance_ids)
-print(f"[+] {new_instance_count} instances loaded. {new_instance_count-old_instance_count} instances added.")
+print(f"[+] {new_instance_count} instances loaded. [{new_instance_count-old_instance_count}] new instances added 🎉")
 print("=====" * 5)
     
 print(f"🟢 Uploading the new {args.language} dataset...")
