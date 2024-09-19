@@ -280,15 +280,18 @@ class LeetCodeRetrival:
     def submit_pipeline(self, start, range_):
         question_list = self.question_retrieval(start, range_)
 
-        for question in question_list:
-            if question['paidOnly']: continue        
-            if 'database' in [topic['slug'] for topic in question['topicTags']]: continue
+        for question in question_list:            
             print(f"====================== {self.lang} Question:", question['frontendQuestionId'], question['questionId'], question['titleSlug'])
-            
-            submissions = self.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code)
-            if submissions:
-                print(f"[+] Found solution 😃")
-                time.sleep(0.5)
+            question_id = question['questionId']
+            if question['paidOnly']: 
+                print(f"[-] Found [{question_id}] is a paid-only question, skipped ⏭️")
+                continue
+            if question_id in self.question_ids: 
+                print(f"[+] Found [{question_id}] in existing datasets, skipped 😃")
+                continue
+            if self.submission_retrieval(questionSlug=question['titleSlug'], lang=self.lang_code):
+                print(f"[+] Found [{question_id}] has solutions, skipped 😃")
+                continue
             else:
                 if self.mode == "submit":
                     print(f"[+] Generating code and submitting 🚀")
