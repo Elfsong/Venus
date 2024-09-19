@@ -22,7 +22,7 @@ from src.utils import OpenAIClient, DeepSeekClient
 
 def retry(func):
     def wrap(*args, **kwargs):
-        for i in range(4):
+        for i in range(3):
             try:
                 result = func(*args, **kwargs)
                 return result
