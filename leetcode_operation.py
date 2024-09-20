@@ -78,8 +78,8 @@ class LeetCodeRetrival:
         }        
         
         if self.mode == "submit":
-            self.client = OpenAIClient("gpt-4o", model_token=self.model_token)
-            # self.client = DeepSeekClient("deepseek-chat", model_token=self.model_token)
+            # self.client = OpenAIClient("gpt-4o", model_token=self.model_token)
+            self.client = DeepSeekClient("deepseek-chat", model_token=self.model_token)
         
         if self.mode == "retrieval":
             try:
@@ -342,7 +342,19 @@ class LeetCodeRetrival:
             print(f"====================== Uploading {len(instances)} instances to HF 🎉")
             ds = Dataset.from_pandas(pd.DataFrame(data=instances))
             ds_name = str(uuid.uuid1())
-            ds.push_to_hub("Elfsong/venus_temp", f"{self.lang}-{ds_name}")
+            
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    ds.push_to_hub("Elfsong/venus_temp", f"{self.lang}-{ds_name}")
+                    print("Dataset successfully pushed to hub 🎉")
+                    break
+                except Exception as e:
+                    print(f"Failed to push dataset to hub (Attempt {attempt + 1}/{max_retries}): {e} 😕")
+                    if attempt < max_retries - 1:
+                        time.sleep(5)
+                    else:
+                        print("Max retries reached. Could not push dataset to hub, skipped 😣")
         
         return instance_count
            
