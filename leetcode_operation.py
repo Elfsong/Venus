@@ -3,10 +3,6 @@
 # Author: Du Mingzhe (mingzhe@nus.edu.sg)
 # Date: 2024 / 09 / 14
 
-# 我想让你见识一下什么是真正的勇敢，而不要错误地认为一个人手握枪支就是勇敢。
-# 勇敢是：当你还未开始就已知道自己会输，可你依然要去做，而且无论如何都要把它坚持到底。
-# 你很少能赢，但有时也会。
-
 import os
 import time
 import json
@@ -17,36 +13,10 @@ import pandas as pd
 from tqdm import tqdm
 import src.prompts as prompts
 from datasets import Dataset, load_dataset
-from src.utils import OpenAIClient, DeepSeekClient
+from src.utils import OpenAIClient, retry, vital_retry
 
-def retry(func):
-    def wrap(*args, **kwargs):
-        for i in range(3):
-            try:
-                result = func(*args, **kwargs)
-                return result
-            except Exception as e:
-                sleep_time = 1.5**(i)
-                print("🟡", end=" ", flush=True)
-                time.sleep(sleep_time)
-        print("🟠", end=" ", flush=True)
-        return None
-    return wrap
 
-def vital_retry(func):
-    def wrap(*args, **kwargs):
-        for i in range(3):
-            try:
-                result = func(*args, **kwargs)
-                return result
-            except Exception as e:
-                print("🔴")
-                time.sleep(2**(i+1))
-        print("❌")
-        return None
-    return wrap
-
-class LeetCodeRetrival:
+class LeetCodeOperation:
     def __init__(self, lang, mode) -> None:
         self.lang = lang
         self.mode = mode
@@ -79,7 +49,6 @@ class LeetCodeRetrival:
         
         if self.mode == "submit":
             self.client = OpenAIClient("gpt-4o", model_token=self.model_token)
-            # self.client = DeepSeekClient("deepseek-chat", model_token=self.model_token)
         
         if self.mode == "retrieval":
             try:
@@ -87,7 +56,7 @@ class LeetCodeRetrival:
                 for instance in self.dataset['train']:
                     self.existing_question_ids.add(instance['question_id'])
             except ValueError as e:
-                print("Empty Language: ", e)
+                print(f"The subset {self.lang} not found in the dataset: ", e)
     
     def runtime_range(self, instance):
         instance['rt_list'] = list()
@@ -360,13 +329,13 @@ class LeetCodeRetrival:
            
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--language', default="python3") 
+    parser.add_argument('--language', default="python3")
     parser.add_argument("--mode", default="submit")
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=300)
     args = parser.parse_args()
 
-    leetcode_client = LeetCodeRetrival(lang=args.language, mode=args.mode)
+    leetcode_client = LeetCodeOperation(lang=args.language, mode=args.mode)
     instance_count = 0
     for i in tqdm(range(args.start, args.end)):
         if args.mode in ["submit", "statistic"]:

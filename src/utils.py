@@ -3,10 +3,37 @@
 # Author: Mingzhe Du (mingzhe@nus.edu.sg)
 # Date: 2024/08/31
 
-import os
+import time
 import json
 import hashlib
 from openai import OpenAI
+
+def retry(func):
+    def wrap(*args, **kwargs):
+        for i in range(3):
+            try:
+                result = func(*args, **kwargs)
+                return result
+            except Exception as e:
+                sleep_time = 1.5**(i)
+                print("🟡", end=" ", flush=True)
+                time.sleep(sleep_time)
+        print("🟠", end=" ", flush=True)
+        return None
+    return wrap
+
+def vital_retry(func):
+    def wrap(*args, **kwargs):
+        for i in range(3):
+            try:
+                result = func(*args, **kwargs)
+                return result
+            except Exception as e:
+                print("🔴")
+                time.sleep(2**(i+1))
+        print("❌")
+        return None
+    return wrap
 
 def generate_hash(input_string, algorithm='sha256'):
     try:
