@@ -78,8 +78,8 @@ class LeetCodeRetrival:
         }        
         
         if self.mode == "submit":
-            # self.client = OpenAIClient("gpt-4o", model_token=self.model_token)
-            self.client = DeepSeekClient("deepseek-chat", model_token=self.model_token)
+            self.client = OpenAIClient("gpt-4o", model_token=self.model_token)
+            # self.client = DeepSeekClient("deepseek-chat", model_token=self.model_token)
         
         if self.mode == "retrieval":
             try:
