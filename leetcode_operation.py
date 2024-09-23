@@ -119,6 +119,13 @@ class LeetCodeOperation:
                 'difficulty': question['difficulty'],
                 'topics': [topic['slug'] for topic in question['topicTags']],
             }
+            
+            # Code Prompts
+            code_prompts = {}
+            prompts = self.prompt_retrieval(question['titleSlug'])
+            for instance in prompts['data']['question']['codeSnippets']:
+                code_prompts[instance['langSlug']] = instance['code']
+            instance['code_prompt'] = code_prompts[self.lang]
                 
             # Submission Discribution
             time.sleep(1)
@@ -186,6 +193,7 @@ class LeetCodeOperation:
         response = self.retrieval(question_payload)
         return response['data']['problemsetQuestionList']['questions']
     
+    @vital_retry
     def prompt_retrieval(self, titleSlug):
         prompt_payload = json.dumps({
             "query": "query questionEditorData($titleSlug: String!) {question(titleSlug: $titleSlug) {questionId\nquestionFrontendId\ncodeSnippets {lang\nlangSlug\ncode\n}}}",
