@@ -15,6 +15,7 @@ import traceback
 import itertools
 import platform
 import tempfile
+import random
 import signal
 import json
 import time
@@ -209,6 +210,118 @@ class Sandbox(object):
         sys.modules['psutil'] = None
         sys.modules['tkinter'] = None
     
+    
+    @staticmethod
+    def test_case_validation(sample, result):
+        try:
+            with Sandbox.create_tempdir():
+                # These system calls are needed when cleaning up tempdir.
+                import os
+                import shutil
+                rmtree = shutil.rmtree
+                rmdir = os.rmdir
+                chdir = os.chdir
+                
+                # Disable functionalities that can make destructive changes to the test.
+                Sandbox.reliability_guard()
+                
+                try:                    
+                    # Global Namespace
+                    namespace = {}                
+                    exec("import re", namespace)
+                    exec("import sys", namespace)
+                    exec("import json", namespace)
+                    exec("import math", namespace)
+                    exec("import copy", namespace)
+                    exec("import heapq", namespace)
+                    exec("import heapq", namespace)
+                    exec("import bisect", namespace)
+                    exec("import string", namespace)
+                    exec("import string", namespace)
+                    exec("import random", namespace)
+                    exec("import itertools", namespace)
+                    exec("import functools", namespace)
+                    exec("import collections", namespace)
+                    exec("from json import loads", namespace)
+                    exec("from sys import maxsize, stdin", namespace)
+                    exec("from functools import lru_cache, cache", namespace)
+                    exec("from typing import List, Optional, Tuple", namespace)
+                    exec("from typing import Tuple, List, Optional", namespace)
+                    exec("from heapq import heappush, heappop, heapify", namespace)
+                    exec("from bisect import bisect_left, bisect_right", namespace)
+                    exec("from itertools import permutations, zip_longest", namespace)
+                    exec("from math import floor, ceil, factorial, sqrt, inf", namespace)
+                    exec("from collections import defaultdict, Counter, deque", namespace)
+                    exec("from collections import deque, defaultdict, OrderedDict", namespace)
+                    
+                    exec("class ListNode:\n\tdef __init__(self, val=0, next=None):\n\t\tself.val=val\n\t\tself.next=next", namespace)
+                    exec("class TreeNode:\n\tdef __init__(self, val=0, left=None, right=None):\n\t\tself.val=val\n\t\tself.left=left\n\t\tself.right=right", namespace)
+                    exec("def print(*args):pass", namespace)
+                    
+                    with Sandbox.swallow_io():
+                        with Sandbox.time_limit(sample['timeout']):
+                            canonical_solution = random.choice(sample['solutions'])
+                            try:
+                                exec(canonical_solution, namespace)
+                                exec("solution = Solution()", namespace)
+                                exec(sample['test_case_functions']['serialize_input'], namespace)
+                                exec(sample['test_case_functions']['deserialize_input'], namespace)
+                                exec(sample['test_case_functions']['serialize_output'], namespace)
+                                exec(sample['test_case_functions']['deserialize_output'], namespace)
+                                exec(sample['test_case_functions']['generate_test_case_input'], namespace)
+
+                                for _ in range(64):
+                                    exec(canonical_solution, namespace)
+                                    exec("solution = Solution()", namespace)
+                                    exec("test_case_input = generate_test_case_input()", namespace)
+                                    exec("test_case_input_serialized = serialize_input(test_case_input)", namespace)
+                                    exec("test_case_input = deserialize_input(test_case_input_serialized)", namespace)
+                                    exec("test_case_output = solution.{}(*test_case_input)".format(sample['test_case_functions']['entry_point']), namespace)
+                                    exec("test_case_output_serialized = serialize_output(test_case_output)", namespace)
+                                    exec("test_case_output = deserialize_output(test_case_output_serialized)", namespace)
+                                    
+                                    for _ in range(min(8, len(sample['solutions']))):
+                                        exec(random.choice(sample['solutions']), namespace)
+                                        exec("solution = Solution()", namespace)
+                                        exec("test_case_output_ = solution.{}(*test_case_input)".format(sample['test_case_functions']['entry_point']), namespace)
+                                        exec("test_case_output_serialized_ = serialize_output(test_case_output)", namespace)
+                                        exec("test_case_output_ = deserialize_output(test_case_output_serialized)", namespace)
+                                        if namespace['test_case_output'] != namespace['test_case_output_']:
+                                            raise Exception(f"Test case output mismatch")
+                                    result['test_cases'].append({"input": namespace['test_case_input_serialized'], "output": namespace['test_case_output_serialized']})
+                            except Exception as e:
+                                result["status"] = f"failed@{e}"
+                            result["status"] = "success"
+                except Exception as e:
+                    result["status"] = f"failed@{e}"
+
+            # Needed for cleaning up.
+            shutil.rmtree = rmtree
+            os.rmdir = rmdir
+            os.chdir = chdir
+        except Exception as e:
+            pass
+        
+    @staticmethod
+    def run_test_case_validation(sample) -> Dict:
+        """
+        Evaluates the functional correctness of a completion by running the test suite provided in the problem. 
+        """
+
+        with Manager() as manager:
+            result = manager.dict(status=None, test_cases=[])
+
+            p = Process(target=Sandbox.test_case_validation, args=(sample, result))
+            p.start()
+            p.join(timeout=sample['timeout']+1)
+            if p.is_alive():
+                p.kill()
+
+            if not result['status']:
+                result["status"]= "failed@timeout"
+                
+            return dict(status=result['status'], test_cases=result['test_cases'])
+        
     @staticmethod
     def case_evaluation(sample, result):
         try:

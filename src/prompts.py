@@ -78,7 +78,7 @@ Return the {lang} solution in the JSON format:
 """
 
 case_generation = """
-Given the problem description and the canonical solution, write these functions and return in the JSON format:
+Given the problem description and the canonical solution, write these functions and return in the given JSON format. Import all neccessary libraries in the generated code.
 
 Problem Description:
 {problem_description}
@@ -87,11 +87,11 @@ Canonical Solution:
 {canonical_solution}
 
 {{
-	"generate_test_case_input": "a {lang} function 'generate_test_case_input() → Turple(Object)' that randomly generate a test case input object in the reasonable range of problem description given. Wrap the test case input in a tuple.", 
-	"serialize_input": "a {lang} function 'serialize_input(Object) → Str' that takes the test case input {lang} object, and generates the serialized test case input string.", 
-	"deserialize_input": "a {lang} function 'deserialize_input(Str) → Object' that takes the serialized test case input string, and generate the {lang} test case input object.", 
-	"serialize_output": "a {lang} function 'serialize_output(Object) → Str' that takes the test case output {lang}object, and generates the serialized test case output string.", 
-	"deserialize_output": "a {lang} function 'deserialize_output(Str) → Object' that takes the serialized test case output string, and generate the {lang} test case output object.", 
+	"generate_test_case_input": "a {lang} function 'generate_test_case_input() → Turple' that randomly generate a test case input Turple from a reasonable test range. Wrap the test case input in a tuple.", 
+	"serialize_input": "a {lang} function 'serialize_input(Turple) → Str' that takes the test case input {lang} Turple, and generates the serialized test case input string.", 
+	"deserialize_input": "a {lang} function 'deserialize_input(Str) → Turple' that takes the serialized test case input string, and generate the {lang} test case input Turple.", 
+	"serialize_output": "a {lang} function 'serialize_output(Turple) → Str' that takes the test case output {lang} Turple, and generates the serialized test case output string.", 
+	"deserialize_output": "a {lang} function 'deserialize_output(Str) → Turple' that takes the serialized test case output string, and generate the {lang} test case output Turple.", 
 	"entry_point": "the entry point function name of the canonical solution"
 }}
 
