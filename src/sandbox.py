@@ -212,7 +212,7 @@ class Sandbox(object):
     
     
     @staticmethod
-    def test_case_validation(sample, result):
+    def test_case_validation(sample, test_cases, status):
         try:
             with Sandbox.create_tempdir():
                 # These system calls are needed when cleaning up tempdir.
@@ -233,8 +233,9 @@ class Sandbox(object):
                     exec("import json", namespace)
                     exec("import math", namespace)
                     exec("import copy", namespace)
+                    exec("import lxml", namespace)
                     exec("import heapq", namespace)
-                    exec("import heapq", namespace)
+                    exec("import pickle", namespace)
                     exec("import bisect", namespace)
                     exec("import string", namespace)
                     exec("import string", namespace)
@@ -245,14 +246,12 @@ class Sandbox(object):
                     exec("from json import loads", namespace)
                     exec("from sys import maxsize, stdin", namespace)
                     exec("from functools import lru_cache, cache", namespace)
-                    exec("from typing import List, Optional, Tuple", namespace)
-                    exec("from typing import Tuple, List, Optional", namespace)
                     exec("from heapq import heappush, heappop, heapify", namespace)
                     exec("from bisect import bisect_left, bisect_right", namespace)
                     exec("from itertools import permutations, zip_longest", namespace)
                     exec("from math import floor, ceil, factorial, sqrt, inf", namespace)
-                    exec("from collections import defaultdict, Counter, deque", namespace)
-                    exec("from collections import deque, defaultdict, OrderedDict", namespace)
+                    exec("from typing import Set,Dict, List, Optional, Tuple", namespace)
+                    exec("from collections import OrderedDict, defaultdict, Counter, deque", namespace)
                     
                     exec("class ListNode:\n\tdef __init__(self, val=0, next=None):\n\t\tself.val=val\n\t\tself.next=next", namespace)
                     exec("class TreeNode:\n\tdef __init__(self, val=0, left=None, right=None):\n\t\tself.val=val\n\t\tself.left=left\n\t\tself.right=right", namespace)
@@ -288,12 +287,13 @@ class Sandbox(object):
                                         exec("test_case_output_ = deserialize_output(test_case_output_serialized)", namespace)
                                         if namespace['test_case_output'] != namespace['test_case_output_']:
                                             raise Exception(f"Test case output mismatch")
-                                    result['test_cases'].append({"input": namespace['test_case_input_serialized'], "output": namespace['test_case_output_serialized']})
+                                    
+                                    test_cases += [{"input": namespace['test_case_input_serialized'], "output": namespace['test_case_output_serialized']}]
+                                status += ["success"]
                             except Exception as e:
-                                result["status"] = f"failed@{e}"
-                            result["status"] = "success"
+                                status += [f"failed@{e}"]
                 except Exception as e:
-                    result["status"] = f"failed@{e}"
+                    status += [f"failed@{e}"]
 
             # Needed for cleaning up.
             shutil.rmtree = rmtree
@@ -309,18 +309,19 @@ class Sandbox(object):
         """
 
         with Manager() as manager:
-            result = manager.dict(status=None, test_cases=[])
+            test_cases = manager.list()
+            status = manager.list()
 
-            p = Process(target=Sandbox.test_case_validation, args=(sample, result))
+            p = Process(target=Sandbox.test_case_validation, args=(sample, test_cases, status))
             p.start()
             p.join(timeout=sample['timeout']+1)
             if p.is_alive():
                 p.kill()
 
-            if not result['status']:
-                result["status"]= "failed@timeout"
+            if not status:
+                status = ["failed@timeout"]
                 
-            return dict(status=result['status'], test_cases=result['test_cases'])
+            return dict(status=status[0], test_cases=list(test_cases))
         
     @staticmethod
     def case_evaluation(sample, result):

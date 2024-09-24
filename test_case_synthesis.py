@@ -3,21 +3,24 @@
 # Date: 2024 / 09 / 21
 
 import os
+import uuid
 import random
 import argparse
-import src.sandbox as sandbox
 from tqdm import tqdm
 import src.prompts as prompts
-from datasets import load_dataset, Dataset
+import src.sandbox as sandbox
 from src.utils import OpenAIClient
+from datasets import load_dataset, Dataset
 
 
 class TestCasesSynthesizer:
     def __init__(self, lang):
         self.lang = lang
         self.sandbox = sandbox.Sandbox()
-        self.ds = load_dataset("Elfsong/venus", self.lang, download_mode="force_redownload")
-        self.dl = self.ds['train'].to_list()
+        self.from_ds = load_dataset("Elfsong/venus", self.lang, download_mode="force_redownload")
+        self.to_ds = load_dataset("Elfsong/venus_case", self.lang, download_mode="force_redownload")
+        self.to_ds_id = set([i['question_id'] for i in self.to_ds['train']])
+        self.dl = self.from_ds['train'].to_list()
         self.client = OpenAIClient(model_name="gpt-4o", model_token=os.getenv("CLIENT_API_KEY"))
 
     def generate_test_case(self, instance, canonical_solution):
@@ -104,6 +107,10 @@ class TestCasesSynthesizer:
         for index, instance in enumerate(sub_dl):
             print("========== Generating test cases for {id}.{name} [{index}/{total}]".format(id=instance['question_id'], name=instance['name'], index=index+1, total=10))
             
+            if instance['question_id'] in self.to_ds_id:
+                print(f"Found the case in the dataset. Skipped ✅")
+                continue
+            
             try:
                 # 1. Select the canonical solution
                 solutions = instance['rt_list'] + instance['mm_list']
@@ -139,19 +146,18 @@ class TestCasesSynthesizer:
                 if result['status'] == "success":
                     instance['test_case_functions'] = test_case_functions
                     instance['test_cases'] = result['test_cases']
+                    new_dl.append(instance)
                     print(f"🟢 Success")
                 else:
-                    instance['test_case_functions'] = None
-                    instance['test_cases'] = None
                     print(f"🔴 Failed: ", result['status'])
                 
-                new_dl.append(instance)
             except Exception as e:
-                print(f"🔴 Failed: {e}")
+                print(f"🔴 Failed: ", e)
                 continue
         
         new_ds = Dataset.from_list(new_dl)
-        new_ds.push_to_hub(f"Elfsong/Venus_Case", self.lang)
+        ds_name = str(uuid.uuid1())
+        new_ds.push_to_hub(f"Elfsong/Venus_Case_Temp", ds_name)
 
 
 if __name__ == "__main__":
