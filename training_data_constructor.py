@@ -38,7 +38,7 @@ class DataConstructor:
                             'solution_r': solution_r
                         }
                     ]
-        print("PCD Size:", len(data_collection))
+        print(f"PCD [{self.lang}-{self.metric}] Size: {len(data_collection)}")
         pcd = Dataset.from_list(data_collection)
         pcd.push_to_hub(f"Elfsong/Venus_PCD", f'{self.lang}-{self.metric}')
     
