@@ -78,7 +78,7 @@ Return the {lang} solution in the JSON format:
 """
 
 case_generation = """
-Given the problem description and the canonical solution, write these functions and return in the given JSON format. Import all neccessary libraries in the generated code.
+Given the problem description and the canonical solution, write these functions and return in the given JSON format. Import all neccessary libraries in the code.
 
 Problem Description:
 {problem_description}

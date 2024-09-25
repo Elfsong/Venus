@@ -248,9 +248,9 @@ class Sandbox(object):
                     exec("from functools import lru_cache, cache", namespace)
                     exec("from heapq import heappush, heappop, heapify", namespace)
                     exec("from bisect import bisect_left, bisect_right", namespace)
-                    exec("from itertools import permutations, zip_longest", namespace)
                     exec("from math import floor, ceil, factorial, sqrt, inf", namespace)
                     exec("from typing import Set,Dict, List, Optional, Tuple", namespace)
+                    exec("from itertools import combinations, permutations, zip_longest", namespace)
                     exec("from collections import OrderedDict, defaultdict, Counter, deque", namespace)
                     
                     exec("class ListNode:\n\tdef __init__(self, val=0, next=None):\n\t\tself.val=val\n\t\tself.next=next", namespace)
@@ -322,7 +322,48 @@ class Sandbox(object):
                 status = ["failed@timeout"]
                 
             return dict(status=status[0], test_cases=list(test_cases))
-        
+    
+    @staticmethod
+    def code_execution(sample, results):
+        try:
+            with Sandbox.create_tempdir():
+                # These system calls are needed when cleaning up tempdir.
+                import os
+                import shutil
+                rmtree = shutil.rmtree
+                rmdir = os.rmdir
+                chdir = os.chdir
+                
+                # Disable functionalities that can make destructive changes to the test.
+                Sandbox.reliability_guard()
+                          
+                with Sandbox.swallow_io():
+                    with Sandbox.time_limit(sample['timeout']):
+                        # execute the code here
+                        results.append("success")
+            
+                shutil.rmtree = rmtree
+                os.rmdir = rmdir
+                os.chdir = chdir
+        except Exception as e:
+            results.append("failed@error")   
+    
+    @staticmethod
+    def run_code_execution(sample) -> Dict:
+        with Manager() as manager:
+            results = manager.list()
+
+            p = Process(target=Sandbox.test_case_validation, args=(sample, results))
+            p.start()
+            p.join(timeout=sample['timeout']+1)
+            if p.is_alive():
+                p.kill()
+
+            if not status:
+                status = ["failed@timeout"]
+                
+            return list(results)
+    
     @staticmethod
     def case_evaluation(sample, result):
         try:

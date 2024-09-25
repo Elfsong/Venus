@@ -157,7 +157,7 @@ class TestCasesSynthesizer:
         
         new_ds = Dataset.from_list(new_dl)
         ds_name = str(uuid.uuid1())
-        new_ds.push_to_hub(f"Elfsong/Venus_Case_Temp", ds_name)
+        new_ds.push_to_hub(f"Elfsong/Venus_Case_Temp", f'{self.lang}-{ds_name}')
 
 
 if __name__ == "__main__":
