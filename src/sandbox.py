@@ -15,6 +15,7 @@ import traceback
 import itertools
 import platform
 import tempfile
+import psutil
 import random
 import signal
 import json
@@ -210,7 +211,6 @@ class Sandbox(object):
         sys.modules['psutil'] = None
         sys.modules['tkinter'] = None
     
-    
     @staticmethod
     def test_case_validation(sample, test_cases, status):
         try:
@@ -340,27 +340,91 @@ class Sandbox(object):
                 with Sandbox.swallow_io():
                     with Sandbox.time_limit(sample['timeout']):
                         # execute the code here
-                        results.append("success")
-            
+                        try:
+                            namespace = {}
+                            exec("import re", namespace)
+                            exec("import sys", namespace)
+                            exec("import json", namespace)
+                            exec("import math", namespace)
+                            exec("import copy", namespace)
+                            exec("import lxml", namespace)
+                            exec("import heapq", namespace)
+                            exec("import pickle", namespace)
+                            exec("import bisect", namespace)
+                            exec("import string", namespace)
+                            exec("import string", namespace)
+                            exec("import random", namespace)
+                            exec("import itertools", namespace)
+                            exec("import functools", namespace)
+                            exec("import collections", namespace)
+                            exec("from json import loads", namespace)
+                            exec("from sys import maxsize, stdin", namespace)
+                            exec("from functools import lru_cache, cache", namespace)
+                            exec("from heapq import heappush, heappop, heapify", namespace)
+                            exec("from bisect import bisect_left, bisect_right", namespace)
+                            exec("from typing import Set,Dict, List, Optional, Tuple", namespace)
+                            exec("from math import floor, ceil, factorial, sqrt, inf, atan2", namespace)
+                            exec("from itertools import combinations, permutations, zip_longest", namespace)
+                            exec("from collections import OrderedDict, defaultdict, Counter, deque", namespace)
+                            
+                            exec("class ListNode:\n\tdef __init__(self, val=0, next=None):\n\t\tself.val=val\n\t\tself.next=next", namespace)
+                            exec("class TreeNode:\n\tdef __init__(self, val=0, left=None, right=None):\n\t\tself.val=val\n\t\tself.left=left\n\t\tself.right=right", namespace)
+                            exec("def print(*args):pass", namespace)
+                            
+                            tracemalloc.start()
+                            start_time = time.process_time_ns()
+                            
+                            exec(sample['solution'], namespace)
+                            exec("solution = Solution()", namespace)
+                            exec(sample['functions']['serialize_input'], namespace)
+                            exec(sample['functions']['deserialize_input'], namespace)
+                            exec(sample['functions']['serialize_output'], namespace)
+                            exec(sample['functions']['deserialize_output'], namespace)
+                            exec(sample['functions']['generate_test_case_input'], namespace)
+
+                            for test_case in sample['test_cases']:
+                                s_test_case_input_serialized = test_case['input']
+                                s_test_case_output_serialized = test_case['output']
+                                
+                                namespace['test_case_input_serialized'] = s_test_case_input_serialized
+                                exec("test_case_input = deserialize_input(test_case_input_serialized)", namespace)
+                                exec("test_case_output = solution.{}(*test_case_input)".format(sample['functions']['entry_point']), namespace)
+                                exec("test_case_output_serialized = serialize_output(test_case_output)", namespace)
+                                
+                                test_case_output_serialized = namespace['test_case_output_serialized']
+                                
+                                if test_case_output_serialized != s_test_case_output_serialized:
+                                    raise Exception(f"Test case output mismatch")
+                            
+                            end_time = time.process_time_ns()
+                            current, peak = tracemalloc.get_traced_memory()
+                            results.append("pass")
+                            results.append((end_time-start_time)/10**6)
+                            results.append(peak/10**3)
+                            
+                            tracemalloc.stop()
+                        except Exception as e:
+                            results.append(f"failed@code_error:{e}")
+
                 shutil.rmtree = rmtree
                 os.rmdir = rmdir
                 os.chdir = chdir
         except Exception as e:
-            results.append("failed@error")   
+            results.append(f"failed@sandbox_error:{e}")
     
     @staticmethod
     def run_code_execution(sample) -> Dict:
         with Manager() as manager:
             results = manager.list()
 
-            p = Process(target=Sandbox.test_case_validation, args=(sample, results))
+            p = Process(target=Sandbox.code_execution, args=(sample, results))
             p.start()
             p.join(timeout=sample['timeout']+1)
             if p.is_alive():
                 p.kill()
 
-            if not status:
-                status = ["failed@timeout"]
+            if not results:
+                results = ["failed@timeout"]
                 
             return list(results)
     
