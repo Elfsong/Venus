@@ -35,7 +35,7 @@ class SolutionEvaluator:
                 code = solution['code']
                 if 'stdin' not in code and 'Solution' in code:
                     solution_candidates += [code]
-            solution_candidates = random.sample(solution_candidates, 5)
+            solution_candidates = random.sample(solution_candidates, 12)
 
             for s_index, solution in enumerate(solution_candidates):
                 status, rt, mm = self.evaluate(solution, instance['test_cases'], instance['test_case_functions'])

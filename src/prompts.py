@@ -119,3 +119,15 @@ Response:
     "entry_point": "twoSum"
 }}
 """
+
+PCD_prompt = """Given the problem description: {problem_description}, please identify the functional correct and most {metric} efficient solution.
+
+Solution A:
+{solution_a}
+
+Solution B:
+{solution_b}
+
+Solution C:
+{solution_b}
+"""
