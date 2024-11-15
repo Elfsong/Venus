@@ -343,7 +343,7 @@ if __name__ == "__main__":
     parser.add_argument('--language', default="golang")
     parser.add_argument("--mode", default="retrieval")
     parser.add_argument("--start", type=int, default=0)
-    parser.add_argument("--end", type=int, default=5)
+    parser.add_argument("--end", type=int, default=300)
     parser.add_argument("--range", type=int, default=2)
     args = parser.parse_args()
 
