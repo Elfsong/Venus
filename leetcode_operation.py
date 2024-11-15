@@ -344,15 +344,16 @@ if __name__ == "__main__":
     parser.add_argument("--mode", default="retrieval")
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=5)
+    parser.add_argument("--range", type=int, default=2)
     args = parser.parse_args()
 
     leetcode_client = LeetCodeOperation(lang=args.language, mode=args.mode)
     instance_count = 0
     for i in tqdm(range(args.start, args.end)):
         if args.mode in ["submit", "statistic"]:
-            instance_count += leetcode_client.submit_pipeline(i*10, 10)
+            instance_count += leetcode_client.submit_pipeline(i*args.range, args.range)
         elif args.mode == "retrieval": 
-            instance_count += leetcode_client.retrieval_pipeline(i*10, 10, sample_num=2)
+            instance_count += leetcode_client.retrieval_pipeline(i*args.range, args.range, sample_num=2)
         else:
             print(f"Unknown Mode: {args.mode}")
     
