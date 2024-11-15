@@ -123,8 +123,8 @@ class LeetCodeOperation:
             # Code Prompts
             code_prompts = {}
             prompts = self.prompt_retrieval(question['titleSlug'])
-            for instance in prompts['data']['question']['codeSnippets']:
-                code_prompts[instance['langSlug']] = instance['code']
+            for code_snippet in prompts['data']['question']['codeSnippets']:
+                code_prompts[code_snippet['langSlug']] = code_snippet['code']
             instance['code_prompt'] = code_prompts[self.lang]
                 
             # Submission Discribution
@@ -339,10 +339,10 @@ class LeetCodeOperation:
            
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--language', default="python3")
-    parser.add_argument("--mode", default="submit")
+    parser.add_argument('--language', default="golang")
+    parser.add_argument("--mode", default="retrieval")
     parser.add_argument("--start", type=int, default=0)
-    parser.add_argument("--end", type=int, default=300)
+    parser.add_argument("--end", type=int, default=5)
     args = parser.parse_args()
 
     leetcode_client = LeetCodeOperation(lang=args.language, mode=args.mode)
