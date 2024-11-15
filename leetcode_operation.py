@@ -9,10 +9,12 @@ import json
 import uuid
 import requests
 import argparse
+import datasets
 import pandas as pd
 from tqdm import tqdm
 import src.prompts as prompts
 from datasets import Dataset, load_dataset
+from datasets import get_dataset_config_names
 from src.utils import OpenAIClient, retry, vital_retry
 
 
@@ -26,7 +28,13 @@ class LeetCodeOperation:
         self.model_token = os.getenv("CLIENT_API_KEY")
         self.leetcode_cookie = os.getenv("LEETCODE_COOKIE")
         self.leetcode_crsf_token = os.getenv("LEETCODE_CRSF_TOKEN")
-        self.lang_code_mapping = { "cpp": 0, "python": 2, "golang": 10, "python3": 11}
+        self.lang_code_mapping = {
+            "cpp": 0, "java": 1, "python": 2, "python3": 11, "mysql": 3, "mssql": 14, "oraclesql": 15, "c": 4,
+            "csharp": 5, "javascript": 6, "typescript": 20, "bash": 8, "php": 19, "swift": 9, "kotlin": 13, "dart": 24,
+            "golang": 10, "ruby": 7, "scala": 12, "html": 16, "pythonml": 17, "rust": 18, "racket": 21, "erlang": 22,
+            "elixir": 23, "pythondata": 25, "react": 26, "vanillajs": 27, "postgresql": 28, "cangjie": 29
+        }
+            
         self.lang_code = self.lang_code_mapping[self.lang]
         self.leetcode_headers = self.create_headers(self.leetcode_cookie, self.leetcode_crsf_token)
         
@@ -234,7 +242,12 @@ class LeetCodeOperation:
         if not response_json['data'][next(iter(response_json['data']))]:
             raise LookupError("Null Response")
         return response_json
-        
+    
+    def get_subsets(self):
+        configs = get_dataset_config_names("Elfsong/venus_temp")
+        subsets = [config for config in configs if config.startswith(self.lang)]
+        return subsets
+
     def code_generation(self, instance):
         problem_description = instance['content']
         code_prompt = ""
@@ -337,23 +350,78 @@ class LeetCodeOperation:
                         print("Max retries reached. Could not push dataset to hub, skipped 😣")
         
         return instance_count
+   
+    def merge_pipeline(self):
+        instances = list()
+        instance_ids = set()
+        subsets = self.get_subsets()
+
+        print(f"🟢 Loading instances from the [Elssong/Venus] [{self.lang}] dataset...")
+        try:
+            ds = load_dataset("Elfsong/venus", self.lang)
+            for instance in ds['train'].to_list():
+                question_id = int(instance['question_id'])
+                if question_id not in instance_ids:
+                    instance_ids.add(instance['question_id'])
+                    instances.append(instance)
+            old_instance_count = len(instance_ids)
+            print(f"[+] {old_instance_count} instances Loaded.")
+            print("========" * 5)
+        except ValueError as e:
+            old_instance_count = 0
+            print(f"[-] Empty dataset {args.language}, will create a new dataset.")
+        
+        print(f"🟢 Loading new instances from [Elfsong/venus_temp] [{self.lang}]...")
+        for subset_name in tqdm(subsets):
+            print(f"[+] Current Subset [{subset_name}]")    
+            try: 
+                if f"{args.language}-" in subset_name:
+                    ds = load_dataset("Elfsong/venus_temp", subset_name)
+                    for instance in ds['train'].to_list():
+                        if instance['question_id'] not in instance_ids:
+                            instance_ids.add(instance['question_id'])
+                            instances.append(instance)
+            except datasets.exceptions.DatasetGenerationError as e:
+                print(f"[-] Empty Dataset {subset_name}")
+            except Exception as e:
+                print(f"[-] {subset_name} Error: {e}")
+        new_instance_count = len(instance_ids)
+        print(f"[+] {new_instance_count} instances loaded. [{new_instance_count-old_instance_count}] new instances added 🎉")
+        print("========" * 5)
+            
+        print(f"🟢 Uploading the new [{args.language}] dataset...")
+        df = pd.DataFrame(data=instances)
+        df['question_id'] = df['question_id'].astype('int64')
+        ds = Dataset.from_pandas(df)
+        ds.push_to_hub("Elfsong/venus", args.language)
+        print(f"[+] {args.language} dataset uploaded to the hub.")
+        print("========" * 5)
+
+        print("🟢 Checking the new dataset...")
+        ds = load_dataset("Elfsong/venus", args.language)
+        print(f"[+] {len(ds['train'])} instances in the new dataset.")
+        print("========" * 5)
            
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
     parser.add_argument('--language', default="golang")
-    parser.add_argument("--mode", default="retrieval")
+    parser.add_argument("--mode", default="submit")
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=300)
-    parser.add_argument("--range", type=int, default=2)
+    parser.add_argument("--batch", type=int, default=10)
+    parser.add_argument("--sample_num", type=int, default=2)
     args = parser.parse_args()
 
     leetcode_client = LeetCodeOperation(lang=args.language, mode=args.mode)
     instance_count = 0
     for i in tqdm(range(args.start, args.end)):
         if args.mode in ["submit", "statistic"]:
-            instance_count += leetcode_client.submit_pipeline(i*args.range, args.range)
+            instance_count += leetcode_client.submit_pipeline(i*args.batch, args.batch)
         elif args.mode == "retrieval": 
-            instance_count += leetcode_client.retrieval_pipeline(i*args.range, args.range, sample_num=2)
+            instance_count += leetcode_client.retrieval_pipeline(i*args.batch, args.batch, sample_num=args.sample_num)
+        elif args.mode == "merge":
+            leetcode_client.merge_pipeline()
+            break
         else:
             print(f"Unknown Mode: {args.mode}")
     

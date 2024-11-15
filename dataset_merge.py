@@ -6,15 +6,16 @@ import pandas as pd
 from tqdm import tqdm
 from pathlib import Path
 from datasets import Dataset, load_dataset
+from datasets import get_dataset_config_names
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--language', default="python3") 
+parser.add_argument('--language', default="golang") 
 args = parser.parse_args()
 
 def get_subsets():
-    pathlist = Path("../venus_temp").glob(f'{args.language}-*')
-    subsets = [path.name for path in pathlist]
+    configs = get_dataset_config_names("Elfsong/venus_temp")
+    subsets = [config for config in configs if config.startswith(args.language)]
     return subsets
 
 instances = list()
@@ -54,7 +55,7 @@ new_instance_count = len(instance_ids)
 print(f"[+] {new_instance_count} instances loaded. [{new_instance_count-old_instance_count}] new instances added 🎉")
 print("========" * 5)
     
-print(f"🟢 Uploading the new {args.language} dataset...")
+print(f"🟢 Uploading the new [{args.language}] dataset...")
 df = pd.DataFrame(data=instances)
 df['question_id'] = df['question_id'].astype('int64')
 ds = Dataset.from_pandas(df)
