@@ -38,7 +38,8 @@ class LeetCodeOperation:
             for instance in self.dataset['train']:
                 self.existing_question_ids.add(instance['question_id'])
         except ValueError as e:
-            print(f"The subset {self.lang} not found in the dataset: ", e)
+            print(f"[-] The subset {self.lang} not found in the dataset: ", e)
+            print(f"[-] It should be fine if you are collecting a new subset.")
                 
     def create_headers(self, leetcode_cookie, leetcode_crsf_token):
         headers = {
