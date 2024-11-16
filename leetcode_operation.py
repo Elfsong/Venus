@@ -155,14 +155,14 @@ class LeetCodeOperation:
                 self.runtime_range(instance)
                 instance['runtimeDistribution'] = json.dumps(instance['runtimeDistribution'])
             else:
-                print(f"[-] Can't retrieve Runtime Distribution 🔴")
+                print(f"[-] Can't retrieve any Runtime Distribution 🔴")
                 
             if submission_details['memoryDistribution']:
                 instance['memoryDistribution'] = json.loads(submission_details['memoryDistribution'])
                 self.memory_range(instance)
                 instance['memoryDistribution'] = json.dumps(instance['memoryDistribution'])
             else:
-                print(f"[-] Can't retrieve Memory Distribution 🔴")
+                print(f"[-] Can't retrieve any Memory Distribution 🔴")
             
             return instance
         except json.decoder.JSONDecodeError as e:
