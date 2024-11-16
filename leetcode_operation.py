@@ -10,6 +10,7 @@ import uuid
 import requests
 import argparse
 import datasets
+import traceback
 import pandas as pd
 from tqdm import tqdm
 import src.prompts as prompts
@@ -149,18 +150,26 @@ class LeetCodeOperation:
                 print(f"[-] Can't retrieve the submission detail 🔴")
                 return None
             
-            instance['runtimeDistribution'] = json.loads(submission_details['runtimeDistribution'])
-            instance['memoryDistribution'] = json.loads(submission_details['memoryDistribution'])
-            
-            self.runtime_range(instance)
-            self.memory_range(instance)
-            
-            instance['runtimeDistribution'] = json.dumps(instance['runtimeDistribution'])
-            instance['memoryDistribution'] = json.dumps(instance['memoryDistribution'])
+            if submission_details['runtimeDistribution']:
+                instance['runtimeDistribution'] = json.loads(submission_details['runtimeDistribution'])
+                self.runtime_range(instance)
+                instance['runtimeDistribution'] = json.dumps(instance['runtimeDistribution'])
+            else:
+                print(f"[-] Can't retrieve Runtime Distribution 🔴")
+                
+            if submission_details['memoryDistribution']:
+                instance['memoryDistribution'] = json.loads(submission_details['memoryDistribution'])
+                self.memory_range(instance)
+                instance['memoryDistribution'] = json.dumps(instance['memoryDistribution'])
+            else:
+                print(f"[-] Can't retrieve Memory Distribution 🔴")
             
             return instance
+        except json.decoder.JSONDecodeError as e:
+            print("[-] construct_instance: JSONDecodeError", e)
         except Exception as e:
-            print("[-] construct_instance error", e)
+            print("[-] construct_instance: Error", e)
+            traceback.print_exc()
             return None
         
     def runtime_retrieval(self, question_id, lang, index, runtime):

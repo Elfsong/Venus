@@ -3,3 +3,5 @@ playground.ipynb
 .vscode/launch.json
 token.sh
 google_setup.sh
+retrieval.sh
+submit.sh
