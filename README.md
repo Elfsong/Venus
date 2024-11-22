@@ -1,7 +1,7 @@
 # AfterBurner
 Controlling Code Optimization with Instructions
 
-- 🎉 What is Venus? Venus is the dataset used to train Afterburner(WIP). It is an extension of the original Mercury dataset and currently includes 6 languages: Python3, C, C++, Java, Go, and Rust.
+- 🎉 What is Venus? Venus is the dataset used to train Afterburner(WIP). It is an extension of the original Mercury dataset and currently includes 6 languages: Python3, C++, Javascript, Go, Rust, and Java.
 - 🚧 What is the current progress? We are in the process of expanding the dataset to include more programming languages.
 - 🔮 Why Venus stands out? A key contribution of Venus is that it provides runtime and memory distributions containing multiple solutions for each problem—significantly more than existing datasets. It can be potentially used in Reinforcement Learning or Instruction Tuning.
 - 🌠 Acknowledgement: Please consider upvoting and citing our work if you find it useful. If you have any questions or issues with the dataset, feel free to email me at mingzhe@nus.edu.sg. Thank you! 😀
