@@ -2,6 +2,9 @@
 ![Venus](https://github.com/user-attachments/assets/63d18e15-7ffc-4d9d-a12a-cbf51d1e4dd9)
 
 ---
+[![arXiv](https://img.shields.io/badge/arXiv-2402.07844-b31b1b.svg)](https://arxiv.org/abs/2402.07844)
+[![HuggingFace](https://img.shields.io/badge/Hugging%20Face-Elfsong/Mercury-ffd21e.svg)](https://huggingface.co/datasets/Elfsong/Mercury)
+[![HuggingFace](https://img.shields.io/badge/Hugging%20Face-Elfsong/Venus-ffd21e.svg)](https://huggingface.co/datasets/Elfsong/Venus)
 
 - **🎉 What is Venus?** Venus is the dataset used to train Afterburner (WIP). It is an extension of the original [Mercury](https://huggingface.co/datasets/Elfsong/Mercury) dataset and currently includes 6 languages: Python3, C++, Javascript, Go, Rust, and Java.
 - **🚧 What is the current progress?** We are in the process of expanding the dataset to include more programming languages.
