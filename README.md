@@ -17,7 +17,7 @@
 
 Please consider citing our paper if you think the resource is useful. Thank you!
 ```
-@inproceedings{du2025afterburner,
+@article{du2025afterburner,
   title={Afterburner: Reinforcement Learning Facilitates Self-Improving Code Efficiency Optimization},
   author={Du, Mingzhe and Luu, Anh Tuan and Liu, Yue and Qing, Yuhao and Huang, Dong and He, Xinyi and Liu, Qian and Ma, Zejun and Ng, See-kiong},
   booktitle={https://arxiv.org/abs/2505.23387},
