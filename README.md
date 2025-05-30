@@ -17,10 +17,10 @@
 
 Please consider citing our paper if you think the resource is useful. Thank you!
 ```
-@inproceedings{du2024mercury,
-  title={Mercury: A code efficiency benchmark for code large language models},
-  author={Du, Mingzhe and Luu, Anh Tuan and Ji, Bin and Liu, Qian and Ng, See-Kiong},
-  booktitle={The Thirty-eight Conference on Neural Information Processing Systems Datasets and Benchmarks Track},
-  year={2024}
+@inproceedings{du2025afterburner,
+  title={Afterburner: Reinforcement Learning Facilitates Self-Improving Code Efficiency Optimization},
+  author={Du, Mingzhe and Luu, Anh Tuan and Liu, Yue and Qing, Yuhao and Huang, Dong and He, Xinyi and Liu, Qian and Ma, Zejun and Ng, See-kiong},
+  booktitle={https://arxiv.org/abs/2505.23387},
+  year={2025}
 }
 ```
